@@ -32,12 +32,12 @@
 <div id="desk" hidden>
   <header class="bar">
     <div class="brand"><img src="../images/logo.webp" alt="" width="36"><strong>Encima desk</strong></div>
-    <nav>
-      <button data-view="items" class="on">Menu</button>
-      <button data-view="review">Review <span class="count" id="revCount" hidden></span></button>
-      <button data-view="pages">Pages</button>
+    <nav aria-label="Desk">
+      <button type="button" data-view="items" class="on">Menu</button>
+      <button type="button" data-view="review">Review <span class="count" id="revCount" hidden></span></button>
+      <button type="button" data-view="pages">Pages</button>
     </nav>
-    <div class="who"><span id="who"></span><button class="link" id="out">Sign out</button></div>
+    <div class="who"><span id="who"></span><button type="button" class="link" id="out">Sign out</button></div>
   </header>
   <main id="main"></main>
 </div>
@@ -45,6 +45,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
+<script src="desk-lib.js"></script>
+<script src="desk-api.js"></script>
+<script src="desk-views.js"></script>
 <script src="desk.js"></script>
 </body>
 </html>
