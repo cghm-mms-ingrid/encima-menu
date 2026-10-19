@@ -170,6 +170,12 @@
   /* ============ item actions ============ */
   async function archiveItem(it) {
     const prev = it.visibility;
+    const ok = await D.confirmBox({
+      title: `Archive “${it.name}”?`,
+      body: `It will be removed from the public menu but kept here. You can bring it back any time with <b>Restore</b> in the Archived filter.`,
+      confirm: "Archive item", cancel: "Keep item", danger: true
+    });
+    if (!ok) return false;
     try {
       await api.setVisibility(it.id, "archived");
       await api.loadAll();
