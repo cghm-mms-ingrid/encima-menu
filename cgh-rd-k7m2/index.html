@@ -42,6 +42,124 @@
   <main id="main"></main>
 </div>
 
+```html
+<!-- LOCATION & RESERVATIONS -->
+<section id="location" class="location-section">
+  <div class="wrap-b">
+    <div class="location-heading">
+      <p class="kick-g">VISIT US</p>
+      <h2>Find Us Above the City</h2>
+      <p>
+        Join us at Encima Roofdeck Restaurant
+        at City Garden Hotel Makati.
+      </p>
+    </div>
+
+    <div class="location-map">
+      <iframe
+        src="https://maps.google.com/maps?q=Encima%20Roofdeck%20Restaurant%2C%20Makati&t=&z=16&ie=UTF8&iwloc=&output=embed"
+        title="Encima Roofdeck Restaurant location on Google Maps"
+        width="100%"
+        height="380"
+        style="border:0;"
+        loading="lazy"
+        allowfullscreen
+        referrerpolicy="no-referrer-when-downgrade">
+      </iframe>
+    </div>
+
+    <div class="location-actions">
+      <a
+        class="reserve-location-btn"
+        href="https://www.google.com/maps/reserve/v/dine/c/vjA9FxwsuF0?source=pa&amp;opi=79508299&amp;hl=en-PH&amp;gei=rOjVati5JavI1e8P-Yu_8Qg&amp;ahbb=1&amp;sourceurl=https://www.google.com/maps/preview/place?authuser%3D0%26hl%3Den%26gl%3Dph%26q%3DEncima%2BRoofdeck%2BRestaurant,%2BMakati%26pb%3D!1m15!1s0x3397c9aa486903c7:0x831ac3f111f4a709!2sEncima%2BRoofdeck%2BRestaurant,%2BMakati!3m12!1m3!1d30892.266577696602!2d121.0220544!3d14.568652799999999!2m3!1f0.0!2f0.0!3f0.0!3m2!1i1024!2i768!4f13.1!12m4!2m3!1i360!2i120!4i8!13m57!2m2!1i203!2i100!3m2!2i4!5b1!6m6!1m2!1i86!2i86!1m2!1i408!2i240!7m33!1m3!1e1!2b0!3e3!1m3!1e2!2b1!3e2!1m3!1e2!2b0!3e3!1m3!1e8!2b0!3e3!1m3!1e10!2b0!3e3!1m3!1e10!2b1!3e2!1m3!1e10!2b0!3e4!1m3!1e9!2b1!3e2!2b1!9b0!15m8!1m7!1m2!1m1!1e2!2m2!1i195!2i195!3i20!14m3!1srOjVavrSB8m0hvcPuZ7z2Qw!7e81!15i10112!15m108!1m26!13m9!2b1!3b1!4b1!6i1!8b1!9b1!14b1!20b1!25b1!18m15!3b1!4b1!5b1!6b1!13b1!14b1!17b1!21b1!22b1!30b1!32b1!33m1!1b1!34b1!36e2!10m1!8e3!11m1!3e1!17b1!20m2!1e3!1e6!24b1!25b1!26b1!27b1!29b1!30m1!2b1!36b1!37b1!39m3!2m2!2i1!3i1!43b1!52b1!54m1!1b1!55b1!56m1!1b1!61m2!1m1!1e1!65m5!3m4!1m3!1m2!1i224!2i298!72m22!1m8!2b1!5b1!7b1!12m4!1b1!2b1!4m1!1e1!4b1!8m10!1m6!4m1!1e1!4m1!1e3!4m1!1e4!3sother_user_google_review_posts__and__hotel_and_vr_partner_review_posts!6m1!1e1!9b0!15m8!1m7!1m2!1m1!1e2!2m2!1i195!2i195!3i20!14m3!1srOjVavrSB8m0hvcPuZ7z2Qw!7e81!15i10112!15m108!1m26!13m9!2b1!3b1!4b1!6i1!8b1!9b1!14b1!20b1!25b1!18m15!3b1!4b1!5b1!6b1!13b1!14b1!17b1!21b1!22b1!30b1!32b1!33m1!1b1!34b1!36e2!10m1!8e3!11m1!3e1!17b1!20m2!1e3!1e6!24b1!25b1!26b1!27b1!29b1!30m1!2b1!36b1!37b1!39m3!2m2!2i1!3i1!43b1!52b1!54m1!1b1!55b1!56m1!1b0!37i799"
+        target="_blank"
+        rel="noopener noreferrer">
+        Reserve a Table
+      </a>
+
+      <a
+        class="directions-link"
+        href="https://www.google.com/maps/place/Encima+Roofdeck+Restaurant,+Makati/data=!4m2!3m1!1s0x3397c9aa486903c7:0x831ac3f111f4a709"
+        target="_blank"
+        rel="noopener noreferrer">
+        Get Directions
+      </a>
+    </div>
+  </div>
+</section>
+```
+
+```css
+/* Location & reservation section */
+.location-section {
+  padding: 64px 20px;
+  text-align: center;
+}
+
+.location-heading {
+  margin-bottom: 28px;
+}
+
+.location-heading h2 {
+  margin: 8px 0 12px;
+}
+
+.location-map {
+  overflow: hidden;
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+.location-map iframe {
+  display: block;
+}
+
+.location-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.reserve-location-btn {
+  display: inline-block;
+  padding: 15px 32px;
+  background: #b77b45;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.reserve-location-btn:hover {
+  opacity: 0.85;
+}
+
+.directions-link {
+  color: inherit;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .location-section {
+    padding: 40px 16px;
+  }
+
+  .location-map iframe {
+    height: 300px;
+  }
+
+  .reserve-location-btn {
+    width: 100%;
+    max-width: 320px;
+    box-sizing: border-box;
+  }
+}
+```
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../js/config.js"></script>
 <script src="../js/data.js"></script>
