@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Encima Roofdeck Bar & Restaurant · Menu</title>
+<meta name="description" content="Menu of Encima Roofdeck Bar & Restaurant, 23rd Floor, City Garden Hotel Makati.">
+<meta name="theme-color" content="#44596b">
+<link rel="icon" href="images/logo.webp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@400;600&family=Noto+Sans+KR:wght@400;600&family=Noto+Sans+SC:wght@400;600&family=Noto+Sans+TC:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="#top" aria-label="Encima Roofdeck">
+      <img src="images/logo.webp" alt="" width="46" height="40">
+      <span><b>ENCIMA ROOFDECK</b><small data-i18n="tagline">Bar &amp; Restaurant</small></span>
+    </a>
+    <nav class="links" aria-label="Main">
+      <a href="#best" data-i18n="navBest">Best Sellers</a>
+      <a href="#story" data-i18n="navStory">Our Story</a>
+      <a href="#menu" data-nav-menu data-i18n="menu">Menu</a>
+      <a href="#contact" data-i18n="navContact">Contact</a>
+    </nav>
+    <div class="top-tools">
+      <label class="visually-hidden" for="lang">Language</label>
+      <select id="lang" aria-label="Language"></select>
+      <a class="btn small" id="reserveTop" target="_blank" rel="noopener" data-i18n="reserveShort">Reserve</a>
+    </div>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <p class="kick" data-i18n="heroKick">Rooftop dining · 23rd floor</p>
+      <h1><span class="gold">ENCIMA</span><br><span class="slate">ROOFDECK</span></h1>
+      <p class="lead" data-i18n="heroLead">Mexican- and Spanish-inspired plates, wine, cocktails and coffee, high above Makati.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#menu" data-nav-menu data-i18n="viewFull">View full menu</a>
+        <a id="reserve" class="btn ghost" target="_blank" rel="noopener" data-i18n="reserve">Reserve on OpenTable</a>
+      </div>
+      <ul class="facts">
+        <li><b data-i18n="fact1t">23rd Floor</b><span data-i18n="fact1d">City Garden Hotel Makati</span></li>
+        <li><b data-i18n="fact2t">Open daily</b><span id="hours"></span></li>
+        <li><b data-i18n="fact3t">Food &amp; Drinks</b><span data-i18n="fact3d">Wine, cocktails, coffee</span></li>
+      </ul>
+    </div>
+    <div class="hero-plate">
+      <div class="plate-bg"></div>
+      <img src="images/arroz-con-pollo.webp" alt="Arroz con Pollo" width="560" height="560">
+    </div>
+  </div>
+</section>
+
+<section class="block best" id="best">
+  <div class="wrap">
+    <p class="kick center" data-i18n="bestKick">Guest favorites</p>
+    <h2 class="title center" data-i18n="bestTitle">Best Sellers</h2>
+    <p class="sub-lead center" data-i18n="bestSub">Our most-loved dishes, chosen by the people who dine with us.</p>
+    <div class="best-grid" id="bestGrid"></div>
+    <div class="center"><a class="btn ghost" href="#menu" data-nav-menu data-i18n="viewFull">View full menu</a></div>
+  </div>
+</section>
+
+<section class="block story" id="story">
+  <div class="wrap story-grid">
+    <div class="story-text">
+      <p class="kick" data-i18n="storyKick">Our story</p>
+      <h2 class="title" data-i18n="storyTitle">Above the city, around the table</h2>
+      <p data-i18n="storyP1">Encima means "above" in Spanish, and that is where you will find us: on the 23rd floor of City Garden Hotel Makati, with the skyline at your table.</p>
+      <p data-i18n="storyP2">Our kitchen cooks Mexican- and Spanish-inspired plates alongside pasta, pizza and steaks, made for sharing. Pair them with wine, a signature cocktail or a good cup of coffee.</p>
+      <p class="muted" data-i18n="storyP3">Open every day from morning until midnight.</p>
+    </div>
+    <div class="story-photos">
+      <figure class="ph-main"><img src="images/set-menu-hero.webp" alt="Dinner on the Encima Roofdeck terrace" loading="lazy"><figcaption>Placeholder photo</figcaption></figure>
+      <figure class="ph-box"><img src="images/logo.webp" alt="" loading="lazy"><figcaption data-i18n="photo">Photo coming soon</figcaption></figure>
+      <figure class="ph-box"><img src="images/logo.webp" alt="" loading="lazy"><figcaption data-i18n="photo">Photo coming soon</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="block menu-intro" id="menu">
+  <div class="wrap">
+    <p class="kick center" data-i18n="menuKick">The menu</p>
+    <h2 class="title center" data-i18n="menuTitle">Eat, drink, enjoy</h2>
+  </div>
+</section>
+
+<nav class="nav" aria-label="Menu navigation">
+  <div class="nav-inner">
+    <div class="groups" id="groups" role="tablist"></div>
+    <div class="search"><input id="q" type="search" autocomplete="off" placeholder="Search the menu…" aria-label="Search the menu"></div>
+  </div>
+  <div class="tools">
+    <label class="tool"><span data-i18n="sectionLbl">Section</span>
+      <select id="sectionSel"></select></label>
+    <div class="tool filter-wrap">
+      <span data-i18n="filters">Filters</span>
+      <button id="filterBtn" class="fbtn" aria-expanded="false" aria-controls="filterPanel"></button>
+      <div id="filterPanel" class="fpanel" hidden>
+        <div class="fpanel-head"><b data-i18n="filters">Filters</b><button id="fClose" class="x" aria-label="Close">×</button></div>
+        <div id="filterList"></div>
+        <div class="fpanel-foot"><button id="fClear" class="link" data-i18n="clear">Clear</button><button id="fDone" class="btn small" data-i18n="done">Done</button></div>
+      </div>
+    </div>
+    <label class="tool"><span data-i18n="sortLbl">Sort by</span>
+      <select id="sortSel"></select></label>
+  </div>
+  <div class="active" id="active"></div>
+</nav>
+<div class="scrim" id="scrim" hidden></div>
+
+<main id="menuList" class="menu"></main>
+
+<footer class="foot" id="contact">
+  <img src="images/logo.webp" alt="" width="64">
+  <p class="vat" data-i18n="vat">All prices inclusive of VAT. No service charge.</p>
+  <p id="address"></p>
+  <p><span data-i18n="hours">Open daily</span> <b id="hours2"></b></p>
+  <p><a id="phone"></a> · <a id="email"></a></p>
+  <p class="social"><a id="fb">Facebook</a> · <a id="ig">Instagram</a> · <a id="tt">TikTok</a></p>
+</footer>
+
+<div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal-card">
+    <button class="modal-close" id="mClose" aria-label="Close">×</button>
+    <div class="carousel" id="carousel"></div>
+    <div class="modal-body" id="mBody"></div>
+  </div>
+</div>
+
+<script src="js/data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

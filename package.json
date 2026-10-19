@@ -1,0 +1,13 @@
+{
+  "name": "encima-menu",
+  "version": "1.0.0",
+  "description": "Plain HTML/CSS/JS. Deploy: drag this folder onto Netlify Drop (app.netlify.com/drop) or connect a repo. No build step.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
