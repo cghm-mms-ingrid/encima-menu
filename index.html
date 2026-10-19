@@ -36,9 +36,9 @@
 <section class="hero" id="top">
   <div class="hero-inner">
     <div class="hero-text">
-      <p class="kick" data-i18n="heroKick">Rooftop dining · 23rd floor</p>
+      <p class="kick" id="heroKick" data-i18n="heroKick">Rooftop dining · 23rd floor</p>
       <h1><span class="gold">ENCIMA</span><br><span class="slate">ROOFDECK</span></h1>
-      <p class="lead" data-i18n="heroLead">Mexican- and Spanish-inspired plates, wine, cocktails and coffee, high above Makati.</p>
+      <p class="lead" id="heroLead" data-i18n="heroLead">Mexican- and Spanish-inspired plates, wine, cocktails and coffee, high above Makati.</p>
       <div class="hero-actions">
         <a class="btn" href="#menu" data-nav-menu data-i18n="viewFull">View full menu</a>
         <a id="reserve" class="btn ghost" target="_blank" rel="noopener" data-i18n="reserve">Reserve on OpenTable</a>
@@ -70,10 +70,10 @@
   <div class="wrap story-grid">
     <div class="story-text">
       <p class="kick" data-i18n="storyKick">Our story</p>
-      <h2 class="title" data-i18n="storyTitle">Above the city, around the table</h2>
-      <p data-i18n="storyP1">Encima means "above" in Spanish, and that is where you will find us: on the 23rd floor of City Garden Hotel Makati, with the skyline at your table.</p>
-      <p data-i18n="storyP2">Our kitchen cooks Mexican- and Spanish-inspired plates alongside pasta, pizza and steaks, made for sharing. Pair them with wine, a signature cocktail or a good cup of coffee.</p>
-      <p class="muted" data-i18n="storyP3">Open every day from morning until midnight.</p>
+      <h2 class="title" id="storyTitle" data-i18n="storyTitle">Above the city, around the table</h2>
+      <p id="storyP1" data-i18n="storyP1">Encima means "above" in Spanish, and that is where you will find us: on the 23rd floor of City Garden Hotel Makati, with the skyline at your table.</p>
+      <p id="storyP2" data-i18n="storyP2">Our kitchen cooks Mexican- and Spanish-inspired plates alongside pasta, pizza and steaks, made for sharing. Pair them with wine, a signature cocktail or a good cup of coffee.</p>
+      <p class="muted" id="storyP3" data-i18n="storyP3">Open every day from morning until midnight.</p>
     </div>
     <div class="story-photos">
       <figure class="ph-main"><img src="images/set-menu-hero.webp" alt="Dinner on the Encima Roofdeck terrace" loading="lazy"><figcaption>Placeholder photo</figcaption></figure>
@@ -133,8 +133,11 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
 <script src="js/data.js"></script>
 <script src="js/i18n.js"></script>
+<script src="js/store.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

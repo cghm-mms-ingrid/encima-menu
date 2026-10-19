@@ -1,7 +1,9 @@
-(function () {
+(async function () {
   "use strict";
+  if (typeof loadEncimaData === "function") await loadEncimaData();
   const $ = (s, r = document) => r.querySelector(s);
   const state = { lang: "en", group: "food", block: "all", q: "", tags: new Set(), sort: "menu" };
+  const src = (typeof photoUrl === "function") ? photoUrl : (p) => p ? `images/${p}.webp` : "images/logo.webp";
 
   /* ---------- helpers ---------- */
   const store = {
@@ -88,6 +90,12 @@
     document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
     $("#q").placeholder = t("search");
     $("#hours").textContent = SITE.hours; $("#hours2").textContent = SITE.hours;
+    if (SITE.heroKick) { const el = $("#heroKick"); if (el) el.textContent = SITE.heroKick; }
+    if (SITE.heroLead) { const el = $("#heroLead"); if (el) el.textContent = SITE.heroLead; }
+    if (SITE.storyTitle) { const el = $("#storyTitle"); if (el) el.textContent = SITE.storyTitle; }
+    if (SITE.storyP1) { const el = $("#storyP1"); if (el) el.textContent = SITE.storyP1; }
+    if (SITE.storyP2) { const el = $("#storyP2"); if (el) el.textContent = SITE.storyP2; }
+    if (SITE.storyP3) { const el = $("#storyP3"); if (el) el.textContent = SITE.storyP3; }
     $("#reserve").href = SITE.opentable; $("#reserveTop").href = SITE.opentable;
     $("#address").textContent = SITE.address;
     const ph = $("#phone"); ph.textContent = SITE.phone; ph.href = "tel:" + SITE.phone.replace(/[^+\d]/g, "");
@@ -104,7 +112,7 @@
     $("#bestGrid").innerHTML = all.slice(0, 4).map(([it, si, ii]) => {
       const has = it.photos.length;
       return `<button class="bcard" data-s="${si}" data-i="${ii}">
-        <div class="bimg ${has ? "" : "ph"}"><img loading="lazy" src="images/${has ? it.photos[0] : "logo"}.webp" alt="${has ? esc(tr(it, "name")) : ""}"></div>
+        <div class="bimg ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(tr(it, "name")) : ""}"></div>
         <h3 class="name">${esc(tr(it, "name"))}</h3>${tr(it, "desc") ? `<p class="desc">${esc(tr(it, "desc"))}</p>` : ""}${priceHTML(it.price)}</button>`;
     }).join("");
   }
@@ -142,7 +150,7 @@
   /* ---------- menu ---------- */
   function cardHTML(it, si, ii, compact) {
     const name = tr(it, "name"), desc = tr(it, "desc"), sold = it.status === "soldout", has = it.photos && it.photos.length;
-    const thumb = compact ? "" : `<div class="thumb ${has ? "" : "ph"}"><img loading="lazy" src="images/${has ? it.photos[0] : "logo"}.webp" alt="${has ? esc(name) : ""}"></div>`;
+    const thumb = compact ? "" : `<div class="thumb ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(name) : ""}"></div>`;
     return `<button class="card ${compact ? "compact" : ""} ${sold ? "is-sold" : ""}" data-s="${si}" data-i="${ii}">${thumb}
       <div class="info"><div class="row1"><h4 class="name">${esc(name)}</h4>${priceHTML(it.price)}</div>
       ${desc ? `<p class="desc">${esc(desc)}</p>` : ""}
@@ -196,7 +204,7 @@
     const it = MENU.sections[si].items[ii], name = tr(it, "name"), desc = tr(it, "desc");
     const photos = it.photos && it.photos.length ? it.photos : [null];
     $("#carousel").innerHTML = `<div class="slides" id="slides">${photos.map((p) => p ?
-      `<div class="slide"><img src="images/${p}.webp" alt="${esc(name)}"></div>` :
+      `<div class="slide"><img src="${esc(src(p))}" alt="${esc(name)}"></div>` :
       `<div class="slide ph"><div><img src="images/logo.webp" alt=""><div>${esc(t("photo"))}</div></div></div>`).join("")}</div>
       ${photos.length > 1 ? `<button class="car-btn prev" aria-label="Previous">‹</button><button class="car-btn next" aria-label="Next">›</button><div class="dots">${photos.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
     $("#mBody").innerHTML = `<h3 id="mTitle">${esc(name)}</h3>${priceHTML(it.price)}${desc ? `<p>${esc(desc)}</p>` : ""}

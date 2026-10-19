@@ -1,0 +1,2 @@
+User-agent: *
+Disallow: /cgh-rd-k7m2/
