@@ -535,7 +535,7 @@
     const setPending = S.settings.review_status !== "approved";
     $("#main").innerHTML = `<div class="pane narrow"><div class="row head"><h2>Review list</h2></div>
       <p class="muted">The live website already shows the published version. Mark Approved if no changes are needed, or For revision with a comment.</p>
-      ${setPending ? `<article class="item"><button type="button" class="open" data-pages><img src="../images/logo.webp" alt=""><span class="meta"><strong>Hours, contact &amp; Our Story</strong><small>Site pages</small></span></button><div class="side-r"><div class="chips"><span class="st ${stClass[S.settings.review_status]}">${stLabel[S.settings.review_status]}</span></div></div></article>` : ""}
+      ${setPending ? `<article class="item"><button type="button" class="open" data-pages><img src="../images/logo.webp" alt=""><span class="meta"><strong>Hours, contact, Best Sellers &amp; Our Story</strong><small>Site pages</small></span></button><div class="side-r"><div class="chips"><span class="st ${stClass[S.settings.review_status]}">${stLabel[S.settings.review_status]}</span></div></div></article>` : ""}
       <div class="list" style="margin-top:12px">${pending.map((i) => itemRow(i, { review: true, showSection: true })).join("") || (setPending ? "" : "<div class='empty'><p>Nothing waiting for review.</p></div>")}</div></div>`;
   }
 
@@ -547,12 +547,14 @@
     const last = rows[rows.length - 1];
     const ro = !D.editor();
     const dis = ro ? "disabled" : "";
+    const bestIds = Array.isArray(p.bestIds) ? p.bestIds : [];
+    const storyPhotos = Array.isArray(p.storyPhotos) ? p.storyPhotos : [];
     const f = (name, label, val, tag = "input") =>
       `<label>${label}${tag === "input" ? `<input name="${name}" value="${esc(val || "")}" ${dis}>` : `<textarea name="${name}" ${dis}>${esc(val || "")}</textarea>`}</label>`;
     $("#main").innerHTML = `<div class="pane narrow">
       ${S.settings.review_status === "for_revision" && last ? `<div class="banner-note"><b>For revision:</b> ${esc(last.body)}</div>` : ""}
       <form class="form" id="pageForm" novalidate>
-        <h2>Hours, contact &amp; Our Story</h2>
+        <h2>Hours, contact, Best Sellers &amp; Our Story</h2>
         <p class="muted">Saving goes live immediately. Status: <b>${stLabel[S.settings.review_status]}</b></p>
         <fieldset><legend>Contact</legend><div class="grid2">
           ${f("hours", "Hours", p.hours)}${f("phone", "Phone", p.phone)}${f("email", "Email", p.email)}${f("opentable", "OpenTable / Reserve link", p.opentable)}
@@ -562,25 +564,114 @@
         </div></fieldset>
         <fieldset><legend>Home page</legend>
           ${f("heroKick", "Hero line", p.heroKick)}${f("heroLead", "Hero description", p.heroLead, "textarea")}</fieldset>
+        <fieldset><legend>Best Sellers (home page)</legend>
+          <p class="muted">Choose up to ${BEST_SLOTS} dishes to feature, in the order shown on the website. Leave every box empty to feature items tagged “${esc(TAGS.best.label)}” automatically.</p>
+          <div class="grid2">${Array.from({ length: BEST_SLOTS }, (_, i) =>
+            `<label>${i + 1}${["st", "nd", "rd", "th"][i]} dish<select name="best${i}" ${dis}>${bestOptions(bestIds[i])}</select></label>`).join("")}</div>
+        </fieldset>
         <fieldset><legend>Our Story</legend>
           ${f("storyTitle", "Title", p.storyTitle)}${f("storyP1", "Paragraph 1", p.storyP1, "textarea")}${f("storyP2", "Paragraph 2", p.storyP2, "textarea")}${f("storyP3", "Paragraph 3", p.storyP3, "textarea")}</fieldset>
+        <fieldset><legend>Our Story photos</legend>
+          <p class="muted">JPG, PNG or WebP, up to 5 MB each. Photos are cropped to fill their frame, so use sharp landscape or square shots at least 1200 px wide. An empty slot keeps the default image.</p>
+          <div class="story-slots">${STORY_SLOTS.map((label, i) => storySlotHTML(label, i, storyPhotos[i] || {}, ro)).join("")}</div>
+        </fieldset>
         ${ro ? "" : `<div class="actions"><button class="btn" type="submit" data-primary>Save &amp; publish</button></div>`}
         <p class="err" id="saveErr" role="alert" hidden></p>
       </form>
       <div id="pageReview" style="margin-top:16px">${reviewHTML(rows)}</div></div>`;
+    $("#pageForm")._uploaded = [];   /* story photos uploaded in this visit, for clean-up */
     bindReview($("#pageReview"), "settings", "main", (st) => {
       paint(); D.toast(st === "approved" ? "Marked as approved." : "Sent back for revision.");
     });
   }
 
+  /* ----- best sellers + story photos (Pages tab) ----- */
+  const BEST_SLOTS = 4;
+  const STORY_SLOTS = ["Large photo (left)", "Small photo (top right)", "Small photo (bottom right)"];
+  const MAX_PHOTO = 5 * 1024 * 1024;
+
+  function bestOptions(selected) {
+    let found = !selected;
+    let html = `<option value="">— None —</option>`;
+    D.activeSections().forEach((sec) => {
+      const items = D.itemsOf(sec.id).filter((i) => i.visibility === "published" || i.visibility === "soldout" || i.id === selected);
+      if (!items.length) return;
+      html += `<optgroup label="${esc(sec.name)}">${items.map((i) => {
+        if (i.id === selected) found = true;
+        const note = i.visibility === "hidden" ? " (hidden)" : i.visibility === "soldout" ? " (sold out)" : "";
+        return `<option value="${esc(i.id)}" ${i.id === selected ? "selected" : ""}>${esc(i.name)}${note}</option>`;
+      }).join("")}</optgroup>`;
+    });
+    if (!found) html += `<option value="${esc(selected)}" selected>(item no longer available)</option>`;
+    return html;
+  }
+
+  const slotInnerHTML = (url, i, ro) => ({
+    prev: url ? `<img src="${esc(D.photoSrc(url))}" alt="">` : `<span class="muted">Default image</span>`,
+    acts: ro ? "" : `<label class="file"><input type="file" accept="image/*" data-story-file="${i}"><span class="btn small ghost">${url ? "Replace photo" : "Upload photo"}</span></label>${url ? `<button type="button" class="link" data-story-rm="${i}">Remove (use default)</button>` : ""}`
+  });
+  function storySlotHTML(label, i, ph, ro) {
+    const x = slotInnerHTML(ph.url, i, ro);
+    return `<div class="story-slot" data-slot="${i}" data-ro="${ro ? 1 : 0}">
+      <div class="ss-prev">${x.prev}</div>
+      <div class="ss-body"><b>${esc(label)}</b>
+        <input type="hidden" name="storyUrl${i}" value="${esc(ph.url || "")}">
+        <label>Description for screen readers (optional)<input name="storyAlt${i}" maxlength="140" value="${esc(ph.alt || "")}" ${ro ? "disabled" : ""}></label>
+        <div class="ss-acts">${x.acts}</div>
+      </div></div>`;
+  }
+  function paintSlot(slot) {
+    const i = +slot.dataset.slot, url = slot.querySelector("[type=hidden]").value;
+    const x = slotInnerHTML(url, i, slot.dataset.ro === "1");
+    slot.querySelector(".ss-prev").innerHTML = x.prev;
+    slot.querySelector(".ss-acts").innerHTML = x.acts;
+  }
+  /* A photo uploaded in this visit but then replaced or removed can be deleted straight away. */
+  function dropIfNew(form, url) {
+    const k = form._uploaded.indexOf(url);
+    if (url && k >= 0) { form._uploaded.splice(k, 1); api.removePhotos([url]); }
+  }
+  async function onStoryFile(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const form = input.form, slot = input.closest(".story-slot"), err = $("#saveErr");
+    err.hidden = true;
+    const bad = !/^image\//.test(file.type) ? "Please choose an image (JPG, PNG or WebP)."
+      : file.size > MAX_PHOTO ? "That photo is over 5 MB. Choose a smaller one." : "";
+    if (bad) { err.hidden = false; err.textContent = bad; input.value = ""; return; }
+    const lbl = input.nextElementSibling, was = lbl.textContent;
+    lbl.textContent = "Uploading…"; input.disabled = true;
+    try {
+      const url = await api.uploadPhoto(file, "site");
+      const hidden = slot.querySelector("[type=hidden]");
+      dropIfNew(form, hidden.value);
+      form._uploaded.push(url);
+      hidden.value = url;
+      paintSlot(slot);
+    } catch (ex) {
+      err.hidden = false; err.textContent = D.friendly(ex);
+      lbl.textContent = was; input.disabled = false; input.value = "";
+    }
+  }
+
   async function savePages(form) {
     const e = form.elements, v = (n) => e[n].value.trim();
+    const prev = S.settings.payload || {};
+    const storyPhotos = STORY_SLOTS.map((_, i) => ({ url: v("storyUrl" + i), alt: v("storyAlt" + i) }));
+    const bestIds = [...new Set(Array.from({ length: BEST_SLOTS }, (_, i) => v("best" + i)).filter(Boolean))];
     await api.saveSettings({
+      ...prev,
       hours: v("hours"), phone: v("phone"), email: v("email"), address: v("address"), opentable: v("opentable"),
       social: { facebook: v("facebook"), instagram: v("instagram"), tiktok: v("tiktok") },
       heroKick: v("heroKick"), heroLead: v("heroLead"),
-      storyTitle: v("storyTitle"), storyP1: v("storyP1"), storyP2: v("storyP2"), storyP3: v("storyP3")
+      storyTitle: v("storyTitle"), storyP1: v("storyP1"), storyP2: v("storyP2"), storyP3: v("storyP3"),
+      storyPhotos, bestIds
     });
+    /* Saved. Delete photos that are no longer used (old ones that were replaced, and any unused uploads). */
+    const keep = new Set(storyPhotos.map((x) => x.url));
+    const old = (Array.isArray(prev.storyPhotos) ? prev.storyPhotos : []).map((x) => x && x.url);
+    await api.removePhotos([...old, ...form._uploaded].filter((u) => u && !keep.has(u)));
+    form._uploaded = [];
   }
 
   /* ============ drag to reorder ============ */
@@ -691,6 +782,19 @@
         return;
       }
       if (t.closest("[data-open]")) openItemModal(row.dataset.id);
+    });
+
+    desk.addEventListener("change", (e) => {
+      const inp = e.target.closest && e.target.closest("[data-story-file]");
+      if (inp) onStoryFile(inp);
+    });
+    desk.addEventListener("click", (e) => {
+      const rm = e.target.closest && e.target.closest("[data-story-rm]");
+      if (!rm) return;
+      const slot = rm.closest(".story-slot"), hidden = slot.querySelector("[type=hidden]");
+      dropIfNew(rm.closest("form"), hidden.value);
+      hidden.value = "";
+      paintSlot(slot);
     });
 
     let debounce = 0;

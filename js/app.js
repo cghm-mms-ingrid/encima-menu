@@ -2,6 +2,13 @@
   "use strict";
   if (typeof loadEncimaData === "function") await loadEncimaData();
   const $ = (s, r = document) => r.querySelector(s);
+  const GT = { fil: "tl", "zh-Hans": "zh-CN", "zh-Hant": "zh-TW" };
+  function gTranslate(code) {
+    const combo = document.querySelector(".goog-te-combo");
+    if (!combo) return;
+    combo.value = code === "en" ? "" : (GT[code] || code);
+    combo.dispatchEvent(new Event("change"));
+  }
   const state = { lang: "en", group: "food", block: "all", q: "", tags: new Set(), sort: "menu" };
   const src = (typeof photoUrl === "function") ? photoUrl : (p) => p ? `images/${p}.webp` : "images/logo.webp";
 
@@ -57,27 +64,45 @@
   }
   const tagIcons = (tags) => tags.map((id) => `<span class="tag" title="${esc(tagLabel(id))}" aria-label="${esc(tagLabel(id))}">${TAGS[id].icon}</span>`).join("");
 
-  /* ---------- filtering: an item must have EVERY ticked tag ---------- */
-  function matches(it) {
-    if (!visible(it)) return false;
-    for (const tg of state.tags) if (!it.tags.includes(tg)) return false;
-    if (state.q) {
-      const hay = (tr(it, "name") + " " + it.name + " " + tr(it, "desc")).toLowerCase();
-      if (!hay.includes(state.q.toLowerCase())) return false;
+ /* ---------- filtering: an item must have AT LEAST ONE ticked tag ---------- */
+const tagScore = (it) => {
+  let n = 0;
+  for (const tg of state.tags) if (it.tags.includes(tg)) n++;
+  return n;
+};
+
+function matches(it) {
+  if (!visible(it)) return false;
+  if (state.tags.size && tagScore(it) === 0) return false;
+
+  if (state.q) {
+    const hay = (tr(it, "name") + " " + it.name + " " + tr(it, "desc")).toLowerCase();
+    if (!hay.includes(state.q.toLowerCase())) return false;
+  }
+  return true;
+}
+
+/* ---------- sorting: most ticked tags first, then the chosen sort ---------- */
+function sorted(entries) {
+  const byTags = state.tags.size > 0;
+  if (state.sort === "menu" && !byTags) return entries;
+
+  const dir = state.sort === "desc" ? -1 : 1;
+  return entries.slice().sort((a, b) => {
+    /* 1. more ticked tags matched = higher up */
+    if (byTags) {
+      const diff = tagScore(b[0]) - tagScore(a[0]);
+      if (diff) return diff;
     }
-    return true;
-  }
-  function sorted(entries) {
-    if (state.sort === "menu") return entries;
-    const dir = state.sort === "desc" ? -1 : 1;
-    return entries.slice().sort((a, b) => {
-      const pa = sortPrice(a[0].price), pb = sortPrice(b[0].price);
-      if (pa == null && pb == null) return a[1] - b[1];
-      if (pa == null) return 1;
-      if (pb == null) return -1;
-      return (pa - pb) * dir || a[1] - b[1];
-    });
-  }
+    /* 2. tie-break by the selected sort */
+    if (state.sort === "menu") return a[1] - b[1];
+    const pa = sortPrice(a[0].price), pb = sortPrice(b[0].price);
+    if (pa == null && pb == null) return a[1] - b[1];
+    if (pa == null) return 1;
+    if (pb == null) return -1;
+    return (pa - pb) * dir || a[1] - b[1];
+  });
+}
   const inScope = (b) => {
     if (state.q) return true;                           /* search looks everywhere */
     if (state.block !== "all") return b.id === state.block;
@@ -86,30 +111,111 @@
 
   /* ---------- static chrome ---------- */
   function renderChrome() {
-    document.documentElement.lang = state.lang;
+    document.documentElement.lang = "en";
+
+    // Translate every labelled piece of static text, then let the staff desk override the editable copy.
     document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
     $("#q").placeholder = t("search");
-    $("#hours").textContent = SITE.hours; $("#hours2").textContent = SITE.hours;
-    if (SITE.heroKick) { const el = $("#heroKick"); if (el) el.textContent = SITE.heroKick; }
-    if (SITE.heroLead) { const el = $("#heroLead"); if (el) el.textContent = SITE.heroLead; }
-    if (SITE.storyTitle) { const el = $("#storyTitle"); if (el) el.textContent = SITE.storyTitle; }
-    if (SITE.storyP1) { const el = $("#storyP1"); if (el) el.textContent = SITE.storyP1; }
-    if (SITE.storyP2) { const el = $("#storyP2"); if (el) el.textContent = SITE.storyP2; }
-    if (SITE.storyP3) { const el = $("#storyP3"); if (el) el.textContent = SITE.storyP3; }
-    $("#reserve").href = SITE.opentable; $("#reserveTop").href = SITE.opentable;
-    $("#address").textContent = SITE.address;
-    const ph = $("#phone"); ph.textContent = SITE.phone; ph.href = "tel:" + SITE.phone.replace(/[^+\d]/g, "");
-    const em = $("#email"); em.textContent = SITE.email; em.href = "mailto:" + SITE.email;
-    $("#fb").href = SITE.social.facebook; $("#ig").href = SITE.social.instagram; $("#tt").href = SITE.social.tiktok;
-    $("#lang").innerHTML = LANGS.map((l) => `<option value="${l.code}" ${l.code === state.lang ? "selected" : ""}>${l.label}</option>`).join("");
+    $("#searchToggle").setAttribute("aria-label", t("searchBtn"));
+    $("#optionsBtn").setAttribute("aria-label", t("optTitle"));
+    $("#toolsClose").setAttribute("aria-label", t("close"));
+
+    const setText = (selector, value) => {
+      const el = $(selector);
+      if (el && value) el.textContent = value;
+    };
+
+    // Text edited in the staff desk (Pages tab)
+    setText("#heroKick", SITE.heroKick);
+    setText("#heroLead", SITE.heroLead);
+    setText("#storyTitle", SITE.storyTitle);
+    setText("#storyP1", SITE.storyP1);
+    setText("#storyP2", SITE.storyP2);
+    setText("#storyP3", SITE.storyP3);
+
+    // Opening hours appear in both the hero and footer.
+    setText("#hours", SITE.hours);
+    setText("#footerHours", SITE.hours);
+    setText("#address", SITE.address);
+
+    const ph = $("#phone");
+    if (ph) {
+      ph.textContent = SITE.phone || "";
+      ph.href = SITE.phone
+        ? "tel:" + SITE.phone.replace(/[^\d+]/g, "")
+        : "javascript:void(0)";
+    }
+
+    const em = $("#email");
+    if (em) {
+      em.textContent = SITE.email || "";
+      em.href = SITE.email ? "mailto:" + SITE.email : "javascript:void(0)";
+    }
+
+    const social = SITE.social || {};
+    [["#fb", social.facebook], ["#ig", social.instagram], ["#tt", social.tiktok]].forEach(([selector, url]) => {
+      const el = $(selector);
+      if (!el) return;
+      if (url) {
+        el.href = url;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+      } else {
+        el.removeAttribute("href");
+      }
+    });
+
+    // Reservation buttons
+    ["#reserve", "#reserveTop", "#reserveLocation"].forEach((selector) => {
+      const el = $(selector);
+      if (el && SITE.opentable) {
+        el.href = SITE.opentable;
+        el.target = "_blank";
+        el.rel = "noopener noreferrer";
+      }
+    });
+
+    $("#lang").innerHTML = LANGS.map((l) =>
+      `<option value="${l.code}" ${l.code === state.lang ? "selected" : ""}>${l.label}</option>`
+    ).join("");
+
+    renderStoryPhotos();
     renderBest();
   }
 
+  /* Our story photos: three slots (1 large, 2 small). Staff upload them in the desk (Pages tab).
+     An empty slot keeps the default image from index.html. */
+  function renderStoryPhotos() {
+    const box = $("#storyPhotos");
+    if (!box) return;
+    const custom = Array.isArray(SITE.storyPhotos) ? SITE.storyPhotos : [];
+    box.querySelectorAll("figure").forEach((fig, i) => {
+      const img = fig.querySelector("img");
+      const cap = fig.querySelector("figcaption");
+      const chosen = custom[i] && custom[i].url ? custom[i] : null;
+      fig.classList.toggle("has-photo", !!chosen);
+      img.src = chosen ? src(chosen.url) : fig.dataset.defaultSrc;
+      img.alt = chosen ? (chosen.alt || "") : (fig.dataset.defaultAlt || "");
+      if (cap) cap.hidden = !!chosen;
+    });
+  }
+
+  /* Best sellers: the dishes picked in the desk (Pages tab), in that order.
+     If nothing is picked, fall back to items tagged "Best Seller" (photos first). */
+  const BEST_MAX = 4;
   function renderBest() {
-    const all = [];
-    MENU.sections.forEach((s, si) => s.items.forEach((it, ii) => { if (visible(it) && it.tags.includes("best")) all.push([it, si, ii]); }));
-    all.sort((a, b) => (b[0].photos.length ? 1 : 0) - (a[0].photos.length ? 1 : 0));
-    $("#bestGrid").innerHTML = all.slice(0, 4).map(([it, si, ii]) => {
+    const byId = new Map();
+    MENU.sections.forEach((s, si) => s.items.forEach((it, ii) => { if (it.id != null) byId.set(String(it.id), [it, si, ii]); }));
+
+    const pickedIds = Array.isArray(SITE.bestIds) ? SITE.bestIds : [];
+    let all = pickedIds.map((id) => byId.get(String(id))).filter((e) => e && visible(e[0]));
+
+    if (!all.length) {
+      MENU.sections.forEach((s, si) => s.items.forEach((it, ii) => { if (visible(it) && it.tags.includes("best")) all.push([it, si, ii]); }));
+      all.sort((a, b) => (b[0].photos.length ? 1 : 0) - (a[0].photos.length ? 1 : 0));
+    }
+
+    $("#bestGrid").innerHTML = all.slice(0, BEST_MAX).map(([it, si, ii]) => {
       const has = it.photos.length;
       return `<button class="bcard" data-s="${si}" data-i="${ii}">
         <div class="bimg ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(tr(it, "name")) : ""}"></div>
@@ -145,6 +251,13 @@
     const setOnly = !state.q && (state.group === "setmenu" || state.block === "perfect-night");
     $(".tools").style.display = setOnly ? "none" : "";
     $("#active").style.display = setOnly ? "none" : "";
+    $("#optionsBtn").style.display = setOnly ? "none" : "";
+
+    /* badge on the phone sort/filter button: how many options are changed from the default */
+    const nOpts = state.tags.size + (state.sort !== "menu" ? 1 : 0) + (state.block !== "all" ? 1 : 0);
+    const badge = $("#optBadge");
+    badge.hidden = !nOpts;
+    badge.textContent = nOpts;
   }
 
   /* ---------- menu ---------- */
@@ -163,7 +276,32 @@
       <div class="courses">${it.courses.map((c) => `<div class="course"><h3>${esc(c.title)}</h3>${c.choice ? `<small>${esc(t("chooseOne"))}</small>` : ""}<ul>${c.options.map((o) => `<li>${esc(o)}</li>`).join("")}</ul></div>`).join("")}</div>
       <p class="setprice">${esc(t("tbd"))}</p></div></section>`;
   }
+function renderFlat() {
+  const entries = [];
+  let seq = 0;
+  BLOCKS_LIST.filter(inScope).forEach((b) => {
+    b.secs.forEach(({ s, si }) => {
+      if (s.setmenu) return;
+      s.items.forEach((it, ii) => {
+        seq++;
+        if (matches(it)) entries.push([it, seq, si, ii]);   // seq = global menu order
+      });
+    });
+  });
+
+  const list = sorted(entries);
+  const back = state.block !== "all" && !state.q ? `<button class="link back" data-back>${esc(t("backFull"))}</button>` : "";
+
+  $("#menuList").innerHTML = back + (list.length
+    ? `<section class="section"><div class="grid">${list.map(([it, , si, ii]) => {
+        const compact = MENU.sections[si].group === "drinks" && !(it.photos && it.photos.length);
+        return cardHTML(it, si, ii, compact);
+      }).join("")}</div></section>`
+    : `<p class="empty">${esc(t("noResults"))}</p>`);
+}
+
   function renderMenu() {
+    if (state.tags.size || state.q) return renderFlat();   // flat results, no section banners
     let html = "", count = 0;
     BLOCKS_LIST.filter(inScope).forEach((b) => {
       if (b.secs[0].s.setmenu) {
@@ -191,12 +329,38 @@
   const scrollToMenu = (smooth = true) => { const y = $("#menu").getBoundingClientRect().top + window.scrollY - 4; window.scrollTo({ top: y, behavior: smooth ? "smooth" : "auto" }); };
   const scrollToTools = () => { const y = $(".nav").getBoundingClientRect().top + window.scrollY - 2; window.scrollTo({ top: y, behavior: "smooth" }); };
 
-  /* ---------- filter panel ---------- */
+  /* ---------- filter panel (desktop dropdown) ---------- */
+  const mobileMQ = matchMedia("(max-width:700px)");
+  const isMobile = () => mobileMQ.matches;
   function toggleFilters(open) {
+    if (isMobile()) return;                       /* on phones the filters live inside the sheet below */
     const p = $("#filterPanel"); open = open === undefined ? p.hidden : open;
     p.hidden = !open; $("#filterBtn").setAttribute("aria-expanded", String(open));
-    $("#scrim").hidden = !(open && matchMedia("(max-width:700px)").matches);
   }
+
+  /* ---------- phone toolbar: search toggle + sort/filter sheet ---------- */
+  function toggleSearch(open) {
+    const nav = $(".nav");
+    open = open === undefined ? !nav.classList.contains("search-open") : open;
+    nav.classList.toggle("search-open", open);
+    $("#searchToggle").setAttribute("aria-expanded", String(open));
+    if (open) $("#q").focus();
+    else if (state.q) { state.q = ""; $("#q").value = ""; refresh(); }
+  }
+  function toggleTools(open) {
+    const tools = $("#tools");
+    open = open === undefined ? !tools.classList.contains("open") : open;
+    tools.classList.toggle("open", open);
+    $("#optionsBtn").setAttribute("aria-expanded", String(open));
+    $("#scrim").hidden = !open;
+    document.body.style.overflow = open ? "hidden" : "";
+    if (open) $("#toolsClose").focus();
+  }
+  const scrollToResults = () => {
+    const y = $("#menuList").getBoundingClientRect().top + window.scrollY - $(".nav").offsetHeight - 8;
+    if (window.scrollY > y) window.scrollTo({ top: y, behavior: "smooth" });
+  };
+  mobileMQ.addEventListener("change", () => { toggleTools(false); });
 
   /* ---------- modal + carousel ---------- */
   let cur = 0, lastFocus = null;
@@ -229,30 +393,41 @@
     if (g) { state.group = g.dataset.g; state.block = "all"; state.q = ""; $("#q").value = ""; state.tags.clear(); refresh(); scrollToTools(); return; }
     const rm = e.target.closest("[data-rm]"); if (rm) { state.tags.delete(rm.dataset.rm); refresh(); return; }
     if (e.target.closest("[data-back]")) { state.block = "all"; refresh(); scrollToTools(); return; }
+    if (e.target.closest("#searchToggle")) return toggleSearch();
+    if (e.target.closest("#optionsBtn")) return toggleTools();
+    if (e.target.closest("#toolsClose") || e.target === $("#scrim")) { toggleTools(false); $("#optionsBtn").focus(); return; }
+    if (e.target.closest("#toolsDone")) { toggleTools(false); scrollToResults(); return; }
+    if (e.target.closest("#toolsClear")) { state.tags.clear(); state.sort = "menu"; state.block = "all"; refresh(); return; }
     if (e.target.closest("#filterBtn")) return toggleFilters();
-    if (e.target.closest("#fDone, #fClose") || e.target === $("#scrim")) return toggleFilters(false);
+    if (e.target.closest("#fDone, #fClose")) return toggleFilters(false);
     if (e.target.closest("#fClear")) { state.tags.clear(); refresh(); toggleFilters(true); return; }
     if (!e.target.closest(".filter-wrap")) toggleFilters(false);
     if (e.target === $("#modal") || e.target.closest("#mClose")) closeItem();
   });
   document.addEventListener("change", (e) => {
     const cb = e.target.closest("[data-tag]");
-    if (cb) { cb.checked ? state.tags.add(cb.dataset.tag) : state.tags.delete(cb.dataset.tag); renderMenu(); renderToolbar(); toggleFilters(true); return; }
+    if (cb) {
+      const id = cb.dataset.tag;
+      cb.checked ? state.tags.add(id) : state.tags.delete(id);
+      renderMenu(); renderToolbar(); toggleFilters(true);
+      const again = document.querySelector(`[data-tag="${id}"]`); if (again) again.focus();
+      return;
+    }
   });
   $("#sectionSel").addEventListener("change", (e) => {
     state.block = e.target.value; state.q = ""; $("#q").value = "";
     if (state.block !== "all") state.group = BLOCKS_LIST.find((b) => b.id === state.block).group;
-    state.tags.clear(); refresh(); scrollToTools();
+    state.tags.clear(); refresh(); if (!isMobile()) scrollToTools();
   });
   $("#sortSel").addEventListener("change", (e) => { state.sort = e.target.value; renderMenu(); });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") toggleFilters(false);
+    if (e.key === "Escape") { toggleFilters(false); if ($("#tools").classList.contains("open")) { toggleTools(false); $("#optionsBtn").focus(); } }
     const m = $("#modal"); if (m.hidden) return;
     if (e.key === "Escape") closeItem();
     if (e.key === "ArrowRight" && m._go) m._go(1);
     if (e.key === "ArrowLeft" && m._go) m._go(-1);
   });
-  $("#lang").addEventListener("change", (e) => { state.lang = e.target.value; store.set("encima-lang", state.lang); render(); });
+  $("#lang").addEventListener("change", (e) => { state.lang = e.target.value; store.set("encima-lang", state.lang); render(); gTranslate(state.lang); });
   let timer;
   $("#q").addEventListener("input", (e) => { clearTimeout(timer); timer = setTimeout(() => { state.q = e.target.value.trim(); refresh(); }, 150); });
 

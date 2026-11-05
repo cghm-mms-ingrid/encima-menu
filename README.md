@@ -45,5 +45,5 @@ Then invite that email in Authentication → Users.
 
 ## Files to edit by hand (optional)
 
-- Hours/phone/story after go-live: use the desk **Pages** tab, not the JS files.
+- Hours/phone/story, **Best Sellers** (pick up to 4 dishes) and **Our Story photos** (3 uploads) after go-live: use the desk **Pages** tab, not the JS files.
 - UI translations (buttons only): `js/i18n.js`. Item translations come later.

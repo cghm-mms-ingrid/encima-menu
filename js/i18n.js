@@ -6,7 +6,9 @@ const LANGS = [
   { code: "zh-Hans", label: "简体中文" },
   { code: "zh-Hant", label: "繁體中文" },
   { code: "ko", label: "한국어" },
-  { code: "ja", label: "日本語" }
+  { code: "ja", label: "日本語" },
+  { code: "es", label: "Español" }
+
 ];
 
 const UI = {
@@ -70,11 +72,12 @@ Object.assign(UI.en, {
   storyP3: "Open every day from morning until midnight.",
   menuKick: "The menu", menuTitle: "Eat, drink, enjoy",
   sectionLbl: "Section", sortLbl: "Sort by", allSections: "All sections", sortMenu: "Menu order", sortDesc: "Price: high to low", sortAsc: "Price: low to high",
+  optTitle: "Sort & filter", searchBtn: "Search the menu", showResults: "Show results",
   done: "Done", backFull: "← Back to full menu", activeFilters: "Showing only", selected: "selected", filtersN: "Filters"
 });
 const _x = (code, o) => Object.assign(UI[code], o);
-_x("fil", { navBest: "Best Sellers", navStory: "Aming Kuwento", navContact: "Makipag-ugnayan", reserveShort: "Mag-reserve", viewFull: "Tingnan ang buong menu", sectionLbl: "Seksyon", sortLbl: "Ayusin ayon sa", allSections: "Lahat ng seksyon", sortMenu: "Ayos ng menu", sortDesc: "Presyo: mataas hanggang mababa", sortAsc: "Presyo: mababa hanggang mataas", done: "Tapos", backFull: "← Balik sa buong menu", activeFilters: "Ipinapakita lang", fact2t: "Bukas araw-araw", bestTitle: "Mga Best Seller", menuTitle: "Kain, inom, saya" });
-_x("zh-Hans", { navBest: "人气之选", navStory: "我们的故事", navContact: "联系我们", reserveShort: "订位", viewFull: "查看完整菜单", sectionLbl: "分类", sortLbl: "排序", allSections: "全部分类", sortMenu: "菜单顺序", sortDesc: "价格：从高到低", sortAsc: "价格：从低到高", done: "完成", backFull: "← 返回完整菜单", activeFilters: "仅显示", fact2t: "每日营业", bestTitle: "人气之选", menuTitle: "尽享美食美酒" });
-_x("zh-Hant", { navBest: "人氣之選", navStory: "我們的故事", navContact: "聯絡我們", reserveShort: "訂位", viewFull: "查看完整菜單", sectionLbl: "分類", sortLbl: "排序", allSections: "全部分類", sortMenu: "菜單順序", sortDesc: "價格：由高至低", sortAsc: "價格：由低至高", done: "完成", backFull: "← 返回完整菜單", activeFilters: "僅顯示", fact2t: "每日營業", bestTitle: "人氣之選", menuTitle: "盡享美食美酒" });
-_x("ko", { navBest: "베스트셀러", navStory: "스토리", navContact: "문의", reserveShort: "예약", viewFull: "전체 메뉴 보기", sectionLbl: "섹션", sortLbl: "정렬", allSections: "전체 섹션", sortMenu: "메뉴 순서", sortDesc: "가격 높은 순", sortAsc: "가격 낮은 순", done: "완료", backFull: "← 전체 메뉴로", activeFilters: "표시 중", fact2t: "매일 영업", bestTitle: "베스트셀러", menuTitle: "먹고 마시고 즐기세요" });
-_x("ja", { navBest: "人気メニュー", navStory: "私たちについて", navContact: "お問い合わせ", reserveShort: "予約", viewFull: "全メニューを見る", sectionLbl: "カテゴリ", sortLbl: "並び替え", allSections: "すべてのカテゴリ", sortMenu: "メニュー順", sortDesc: "価格の高い順", sortAsc: "価格の安い順", done: "完了", backFull: "← 全メニューに戻る", activeFilters: "表示中", fact2t: "毎日営業", bestTitle: "人気メニュー", menuTitle: "食べて、飲んで、楽しむ" });
+_x("fil", { optTitle: "Ayusin at i-filter", searchBtn: "Hanapin sa menu", showResults: "Ipakita ang resulta", navBest: "Best Sellers", navStory: "Aming Kuwento", navContact: "Makipag-ugnayan", reserveShort: "Mag-reserve", viewFull: "Tingnan ang buong menu", sectionLbl: "Seksyon", sortLbl: "Ayusin ayon sa", allSections: "Lahat ng seksyon", sortMenu: "Ayos ng menu", sortDesc: "Presyo: mataas hanggang mababa", sortAsc: "Presyo: mababa hanggang mataas", done: "Tapos", backFull: "← Balik sa buong menu", activeFilters: "Ipinapakita lang", fact2t: "Bukas araw-araw", bestTitle: "Mga Best Seller", menuTitle: "Kain, inom, saya" });
+_x("zh-Hans", { optTitle: "排序与筛选", searchBtn: "搜索菜单", showResults: "查看结果", navBest: "人气之选", navStory: "我们的故事", navContact: "联系我们", reserveShort: "订位", viewFull: "查看完整菜单", sectionLbl: "分类", sortLbl: "排序", allSections: "全部分类", sortMenu: "菜单顺序", sortDesc: "价格：从高到低", sortAsc: "价格：从低到高", done: "完成", backFull: "← 返回完整菜单", activeFilters: "仅显示", fact2t: "每日营业", bestTitle: "人气之选", menuTitle: "尽享美食美酒" });
+_x("zh-Hant", { optTitle: "排序與篩選", searchBtn: "搜尋菜單", showResults: "查看結果", navBest: "人氣之選", navStory: "我們的故事", navContact: "聯絡我們", reserveShort: "訂位", viewFull: "查看完整菜單", sectionLbl: "分類", sortLbl: "排序", allSections: "全部分類", sortMenu: "菜單順序", sortDesc: "價格：由高至低", sortAsc: "價格：由低至高", done: "完成", backFull: "← 返回完整菜單", activeFilters: "僅顯示", fact2t: "每日營業", bestTitle: "人氣之選", menuTitle: "盡享美食美酒" });
+_x("ko", { optTitle: "정렬 및 필터", searchBtn: "메뉴 검색", showResults: "결과 보기", navBest: "베스트셀러", navStory: "스토리", navContact: "문의", reserveShort: "예약", viewFull: "전체 메뉴 보기", sectionLbl: "섹션", sortLbl: "정렬", allSections: "전체 섹션", sortMenu: "메뉴 순서", sortDesc: "가격 높은 순", sortAsc: "가격 낮은 순", done: "완료", backFull: "← 전체 메뉴로", activeFilters: "표시 중", fact2t: "매일 영업", bestTitle: "베스트셀러", menuTitle: "먹고 마시고 즐기세요" });
+_x("ja", { optTitle: "並び替えとフィルター", searchBtn: "メニューを検索", showResults: "結果を見る", navBest: "人気メニュー", navStory: "私たちについて", navContact: "お問い合わせ", reserveShort: "予約", viewFull: "全メニューを見る", sectionLbl: "カテゴリ", sortLbl: "並び替え", allSections: "すべてのカテゴリ", sortMenu: "メニュー順", sortDesc: "価格の高い順", sortAsc: "価格の安い順", done: "完了", backFull: "← 全メニューに戻る", activeFilters: "表示中", fact2t: "毎日営業", bestTitle: "人気メニュー", menuTitle: "食べて、飲んで、楽しむ" });

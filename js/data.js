@@ -214,14 +214,20 @@ const TAGS = {
   vegan:   { label: "Vegan-Certified", icon: "🌱" }
 };
 
+
 const SITE = {
-  hours: "7:00 AM – 12:00 AM",
-  phone: "+63 (0)00 000 0000",
-  email: "email@placeholder.com",
+  hours: "7:00 AM – 12:00 MN",
+  phone: "+63 917 8860 380",
+  email: "fnb_supervisor@citygardenhotelmakati.com",
   address: "23rd Floor (SP), City Garden Hotel Makati, Makati Ave. corner Durban St., Makati City 7870",
   opentable: "https://www.opentable.com.au/r/encima-roofdeck-restaurant-makati-reservations-makati-city?restref=327572&lang=en-AU&ot_source=Restaurant%20website&ot_campaign=digital_menu",
-  social: { facebook: "#", instagram: "#", tiktok: "#" }
+  social: {
+    facebook: "https://www.facebook.com/EncimaRoofdeckRestaurant",
+    instagram: "https://www.instagram.com/encimaroofdeckrestaurant",
+    tiktok: "https://www.tiktok.com/@encimaroofdeck?lang=en"
+  }
 };
+
 
 /* ---- Banner blocks: sections that share one banner (drinks are grouped) ---- */
 const BLOCKS = {

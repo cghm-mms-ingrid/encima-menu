@@ -177,7 +177,7 @@ select{font:inherit;font-size:.85rem;padding:8px 10px;border:1px solid var(--lin
 .story-photos img{width:100%;height:100%;object-fit:cover}
 .ph-main{grid-row:1/3;min-height:300px}
 .ph-box{min-height:140px;display:grid;place-items:center;text-align:center}
-.ph-box img{width:44%;height:auto;opacity:.35;object-fit:contain}
+.ph-box img{width:100%;height:250px;opacity:100%;object-fit:cover}
 .story-photos figcaption{position:absolute;left:0;right:0;bottom:8px;font-size:.7rem;color:var(--muted);text-align:center}
 .ph-main figcaption{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
 
@@ -199,11 +199,7 @@ select{font:inherit;font-size:.85rem;padding:8px 10px;border:1px solid var(--lin
 .active{max-width:1200px;margin:auto;padding:0 16px 8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:.8rem}
 .scrim{position:fixed;inset:0;background:rgba(20,26,32,.45);z-index:35}
 .scrim[hidden]{display:none}
-@media(max-width:700px){
-  .fpanel{position:fixed;left:0;right:0;bottom:0;top:auto;margin:0;border-radius:22px 22px 0 0;max-height:80vh;overflow:auto;z-index:45;padding:18px 20px 22px}
-  .fpanel-head{display:flex}
-  .tool{min-width:100%}
-}
+/* (phone toolbar styles live at the end of this file) */
 
 /* sections & banners */
 .menu{max-width:1200px;margin:auto;padding:0 16px 20px}
@@ -231,3 +227,63 @@ select{font:inherit;font-size:.85rem;padding:8px 10px;border:1px solid var(--lin
 .btn.ghost{background:transparent;color:var(--slate);border:1.5px solid var(--slate);box-shadow:none}
 .btn.ghost:hover{background:var(--slate);color:#fff}
 .btn.small{padding:8px 16px;font-size:.82rem}
+
+
+/* ===== Our story: staff-uploaded photos ===== */
+.story-photos figure.has-photo{display:block}
+.story-photos figure.has-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:1}
+
+/* ===== Toolbar: icon buttons + phone sheet ===== */
+.icon-btn{display:none;position:relative;flex:none;width:42px;height:42px;place-items:center;padding:0;border:1px solid var(--line);border-radius:50%;background:#fff;color:var(--slate);cursor:pointer}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn[aria-expanded=true]{background:var(--slate);border-color:var(--slate);color:#fff}
+.opt-badge{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--orange);color:#fff;font-size:.68rem;font-weight:600;line-height:18px;text-align:center}
+.opt-badge[hidden]{display:none}
+.sheet-head,.sheet-foot{display:none}
+
+@media(max-width:700px){
+  html{scroll-padding-top:80px}
+
+  /* one slim row: Food | Drinks | Set Menu + two icons */
+  .nav-inner{flex-wrap:wrap;gap:8px;padding:8px 12px}
+  .groups{flex:1;min-width:0;gap:2px;padding:3px;overflow-x:auto;scrollbar-width:none}
+  .groups::-webkit-scrollbar{display:none}
+  .groups button{flex:1 0 auto;white-space:nowrap;font-size:.8rem;padding:8px 10px}
+  .icon-btn{display:grid}
+
+  /* search opens as a second row only when the magnifier is tapped */
+  .search{display:none;order:3;flex:1 0 100%;min-width:0}
+  .nav.search-open .search{display:block}
+  .search input{padding:9px 14px;font-size:16px}  /* 16px stops iOS zooming in on focus */
+
+  /* active filter chips: one scrolling line, hidden when empty */
+  .active{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;padding:0 12px 8px;scrollbar-width:none}
+  .active::-webkit-scrollbar{display:none}
+  .active:empty{display:none}
+  .active{padding:0 12px 6px}
+  .active .muted{display:none}
+  .active .chip{flex:none;font-size:.75rem;padding:4px 10px}
+
+  /* sort / section / filters move into a slide-up sheet */
+  .tools{position:fixed;left:0;right:0;bottom:0;z-index:45;max-width:none;margin:0;padding:0 20px;
+    flex-direction:column;flex-wrap:nowrap;align-items:stretch;gap:16px;
+    max-height:85vh;overflow-y:auto;overscroll-behavior:contain;
+    background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -18px 40px rgba(51,65,77,.22);
+    transform:translateY(105%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
+  .tools.open{transform:none;visibility:visible;transition:transform .22s ease}
+  .tool{min-width:0;flex:none}
+  .tool select{font-size:16px;padding:11px 12px}
+  .sheet-head,.sheet-foot{display:flex;justify-content:space-between;align-items:center;position:sticky;background:#fff;z-index:1}
+  .sheet-head{top:0;padding:16px 0 4px;font-size:1.05rem;color:var(--slate)}
+  .sheet-foot{bottom:0;padding:12px 0 calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+  .filter-wrap .fbtn{display:none}
+  .fpanel,.fpanel[hidden]{display:block;position:static;min-width:0;margin:6px 0 0;padding:0;border:0;border-radius:0;box-shadow:none;max-height:none;overflow:visible}
+  .fpanel-head,.fpanel-foot{display:none}
+  .fopt{padding:12px 4px}
+}
+@media(max-width:360px){
+  .nav-inner{gap:6px;padding:8px 10px}
+  .icon-btn{width:38px;height:38px}
+  .groups button{font-size:.75rem;padding:8px 8px}
+}
+@media(prefers-reduced-motion:reduce){.tools{transition:none!important}}
