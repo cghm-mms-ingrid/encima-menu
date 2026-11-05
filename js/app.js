@@ -3,11 +3,42 @@
   if (typeof loadEncimaData === "function") await loadEncimaData();
   const $ = (s, r = document) => r.querySelector(s);
   const GT = { fil: "tl", "zh-Hans": "zh-CN", "zh-Hant": "zh-TW" };
+
+  function setGoogtrans(value) {
+    const host = location.hostname;
+    const parts = host.split(".");
+    const domains = ["", host, "." + host];
+    if (parts.length > 2) domains.push("." + parts.slice(-2).join("."));
+    domains.forEach((d) => {
+      const dom = d ? `; domain=${d}` : "";
+      document.cookie = value
+        ? `googtrans=${value}; path=/${dom}`
+        : `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/${dom}`;
+    });
+  }
+
   function gTranslate(code) {
+    const wasTranslated = /googtrans=/.test(document.cookie) ||
+      document.documentElement.classList.contains("translated-ltr") ||
+      document.documentElement.classList.contains("translated-rtl");
+
+    if (code === "en") {
+      if (wasTranslated) {            // go back to the original page
+        setGoogtrans("");
+        location.reload();
+      }
+      return;
+    }
+
+    const target = GT[code] || code;
+    setGoogtrans(`/en/${target}`);    // remembered across reloads
     const combo = document.querySelector(".goog-te-combo");
-    if (!combo) return;
-    combo.value = code === "en" ? "" : (GT[code] || code);
-    combo.dispatchEvent(new Event("change"));
+    if (combo) {
+      combo.value = target;
+      combo.dispatchEvent(new Event("change"));
+    } else {
+      location.reload();              // widget not ready yet; cookie will apply on reload
+    }
   }
   const state = { lang: "en", group: "food", block: "all", q: "", tags: new Set(), sort: "menu" };
   const src = (typeof photoUrl === "function") ? photoUrl : (p) => p ? `images/${p}.webp` : "images/logo.webp";
@@ -52,14 +83,16 @@
     return "en";
   }
 
+  const keep = (s) => `<span class="notranslate" translate="no">${esc(s)}</span>`;
+
   function priceHTML(p) {
     if (p == null) return `<span class="price"><small>${esc(t("tbd"))}</small></span>`;
     if (typeof p === "number") return `<span class="price">${peso(p)}</span>`;
     const parts = [];
-    if (p.glass != null) parts.push(`${esc(t("glass"))} ${peso(p.glass)}`);
-    if (p.glass200 != null) parts.push(`${esc(t("glass200"))} ${peso(p.glass200)}`);
-    if (p.shot != null) parts.push(`${esc(t("shot"))} ${peso(p.shot)}`);
-    if (p.bottle != null) parts.push(`${esc(t("bottle"))} ${peso(p.bottle)}${p.bottleNote ? ` (${esc(p.bottleNote)})` : ""}`);
+    if (p.glass    != null) parts.push(`${keep("Glass")} ${peso(p.glass)}`);
+    if (p.glass200 != null) parts.push(`${keep("Glass 200ml")} ${peso(p.glass200)}`);
+    if (p.shot     != null) parts.push(`${keep("Shot")} ${peso(p.shot)}`);
+    if (p.bottle   != null) parts.push(`${keep("Bottle")} ${peso(p.bottle)}${p.bottleNote ? ` (${esc(p.bottleNote)})` : ""}`);
     return `<span class="price">${parts.map((x) => `<small>${x}</small>`).join("")}</span>`;
   }
   const tagIcons = (tags) => tags.map((id) => `<span class="tag" title="${esc(tagLabel(id))}" aria-label="${esc(tagLabel(id))}">${TAGS[id].icon}</span>`).join("");
@@ -219,7 +252,7 @@ function sorted(entries) {
       const has = it.photos.length;
       return `<button class="bcard" data-s="${si}" data-i="${ii}">
         <div class="bimg ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(tr(it, "name")) : ""}"></div>
-        <h3 class="name">${esc(tr(it, "name"))}</h3>${tr(it, "desc") ? `<p class="desc">${esc(tr(it, "desc"))}</p>` : ""}${priceHTML(it.price)}</button>`;
+        <h3 class="name notranslate" translate="no">${esc(it.name)}</h3>${tr(it, "desc") ? `<p class="desc">${esc(tr(it, "desc"))}</p>` : ""}${priceHTML(it.price)}</button>`;
     }).join("");
   }
 
@@ -265,7 +298,7 @@ function sorted(entries) {
     const name = tr(it, "name"), desc = tr(it, "desc"), sold = it.status === "soldout", has = it.photos && it.photos.length;
     const thumb = compact ? "" : `<div class="thumb ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(name) : ""}"></div>`;
     return `<button class="card ${compact ? "compact" : ""} ${sold ? "is-sold" : ""}" data-s="${si}" data-i="${ii}">${thumb}
-      <div class="info"><div class="row1"><h4 class="name">${esc(name)}</h4>${priceHTML(it.price)}</div>
+      <div class="info"><div class="row1"><h4 class="name notranslate" translate="no">${esc(it.name)}</h4>${priceHTML(it.price)}</div>
       ${desc ? `<p class="desc">${esc(desc)}</p>` : ""}
       <div class="tags">${tagIcons(it.tags)}${sold ? `<span class="badge sold">${esc(t("soldOut"))}</span>` : ""}</div></div></button>`;
   }
@@ -371,7 +404,7 @@ function renderFlat() {
       `<div class="slide"><img src="${esc(src(p))}" alt="${esc(name)}"></div>` :
       `<div class="slide ph"><div><img src="images/logo.webp" alt=""><div>${esc(t("photo"))}</div></div></div>`).join("")}</div>
       ${photos.length > 1 ? `<button class="car-btn prev" aria-label="Previous">‹</button><button class="car-btn next" aria-label="Next">›</button><div class="dots">${photos.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
-    $("#mBody").innerHTML = `<h3 id="mTitle">${esc(name)}</h3>${priceHTML(it.price)}${desc ? `<p>${esc(desc)}</p>` : ""}
+    $("#mBody").innerHTML = `<h3 id="mTitle" class="notranslate" translate="no">${esc(it.name)}</h3>${priceHTML(it.price)}${desc ? `<p>${esc(desc)}</p>` : ""}
       ${it.tags.length ? `<div class="legend">${it.tags.map((id) => `<span class="badge">${TAGS[id].icon} ${esc(tagLabel(id))}</span>`).join("")}</div>` : ""}
       ${it.pairing ? `<p class="pair"><b>${esc(t("pairing"))}:</b> ${esc(it.pairing)}</p>` : ""}`;
     cur = 0;
