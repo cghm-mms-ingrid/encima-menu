@@ -240,13 +240,6 @@ const MENU = {
       I("Pancit Canton", "Stir-fried egg noodles with shrimp, squid, squid balls, cabbage, carrot, green beans and boiled egg. Served with toasted bread.", 400, ["best", "seafood", "pork"]),
       I("Pancit Bihon Guisado", "Stir-fried rice noodles with chorizo, chicken, pork liver, cabbage, carrot and green beans. Served with toasted bread.", 380, ["pork"])
     ]},
-    { id: "rs-sandwiches", group: "roomservice", tone: "slate", name: "Sandwiches", items: [
-      I("Cheese Burger", "Grilled beef patties with lettuce, tomato, onion, pickle, ketchup and mustard on a homemade bun. Served with truffle fries.", 450, ["best"]),
-      I("Buffalo Chicken Sandwich", "Crispy fried chicken fillet in buffalo sauce with lettuce, pickle and mayonnaise on a homemade bun. Served with truffle fries.", 410, ["best", "spicy"])
-    ]},
-    { id: "rs-sides", group: "roomservice", tone: "orange", name: "Sides", items: [
-      I("Mashed Potato", "Classic mashed potato.", 120)
-    ]},
     { id: "rs-coffee-tea", group: "roomservice", tone: "slate", name: "Coffee & Tea", items: [
       I("Freshly Brewed Coffee", "", 150),
       I("Cappuccino (Hot)", "", 180),
@@ -263,9 +256,9 @@ const RS_SHARED = {
   especiales: ["Pan-Seared Salmon", "Grilled Porkchop"],
   pasta: ["Shrimp Scampi", "Beef Lasagna", "Grilled Chicken Pesto", "Truffle Mushroom"],
   pizza: ["Suprema", "Cheeseburger Pizza", "Texmex BBQ", "Pepperoni", "Hawaiian Bacon", "The White House", "Margherita"],
-  tacos: ["Club Sandwich", "Shrimp Quesadilla", "Beef Quesadilla", "Chicken Quesadilla", "Grilled Cheese Sandwich"],
+  tacos: ["Club Sandwich", "Shrimp Quesadilla", "Beef Quesadilla", "Chicken Quesadilla", "Grilled Cheese Sandwich", "Cheeseburger", "Buffalo Chicken Burger"],
   "naked-burrito": ["Beef Naked Burrito", "Chicken Naked Burrito", "Shrimp Naked Burrito"],
-  sides: ["Truffle French Fries", "Mexican Fried Rice", "Flour Tortilla", "Buttered Corn and Carrots", "Garlic Fried Rice", "Plain Rice"],
+  sides: ["Truffle French Fries", "Mexican Fried Rice", "Flour Tortilla", "Buttered Corn and Carrots", "Garlic Fried Rice", "Plain Rice", "Cheesy Mashed Potato"],
   dessert: ["Burnt Basque Cheesecake", "Strawberry Panna Cotta", "Pistachio Tres Leches Cake"],
   coffee: ["Caramel Macchiato"],
   tea: ["Earl Grey", "English Breakfast"],

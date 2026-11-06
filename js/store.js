@@ -10,7 +10,10 @@ async function loadEncimaData() {
         sb.from("items").select("*").order("sort_order"),
         sb.from("site_settings").select("*").eq("id", "main").maybeSingle()
       ]);
-    if (e1 || e2 || !secs || !secs.length) return;
+    if (e1 || e2 || !secs || !secs.length) {
+      console.warn("Encima: database menu not used, showing built-in menu.", { sectionsError: e1 && e1.message, itemsError: e2 && e2.message, sections: secs && secs.length });
+      return;
+    }
     const bySec = {};
     (items || []).forEach((it) => {
       if (!bySec[it.section_id]) bySec[it.section_id] = [];
@@ -29,6 +32,9 @@ async function loadEncimaData() {
       };
     });
     if (settings && settings.payload) Object.assign(SITE, settings.payload);
+    console.info("Encima: menu loaded from database:", secs.length, "sections,", (items || []).length, "items,",
+      secs.filter((s) => s.group_id === "roomservice").length, "room service sections,",
+      (items || []).filter((i) => (i.tags || []).includes("roomservice")).length, "items tagged Room Service");
   } catch (err) {
     console.warn("Encima: using local menu data", err);
   }

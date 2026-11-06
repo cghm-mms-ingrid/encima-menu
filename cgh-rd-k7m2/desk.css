@@ -119,6 +119,8 @@ legend{padding:0 6px;font-size:.78rem;letter-spacing:.06em;text-transform:upperc
 .st.nr{background:#fbe6da;color:var(--danger)}
 .st.rev{background:#f5d9d2;color:var(--danger)}
 .st.ok{background:#e4f0e7;color:var(--ok)}
+.st.both{background:#e6edf5;color:#33506b}
+.both-note{margin:0;padding:8px 12px;border-radius:10px;background:#e6edf5;color:#33506b}
 .st.hide{background:#ececec}
 .st.sold{background:#fff0c2;color:#7a5600}
 .st.arch{background:#e3e8ec;color:var(--slate)}

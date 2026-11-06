@@ -8,9 +8,44 @@
   const api = D.api;
   const ui = (D.ui = { view: "items", secFilter: "all", status: "all", q: "" });
 
+  const RS = "roomservice";
   const isGroup = (id) => MENU.groups.some((g) => g.id === id);
-  const single = () => (ui.secFilter !== "all" && !isGroup(ui.secFilter) ? ui.secFilter : null);
-  const secName = (id) => (S.sections.find((s) => s.id === id) || {}).name || id;
+  const isRsBlock = (id) => typeof id === "string" && id.startsWith("rs:");           /* virtual Room Service block, e.g. "rs:Main Course" */
+  const single = () => (ui.secFilter !== "all" && !isGroup(ui.secFilter) && !isRsBlock(ui.secFilter) ? ui.secFilter : null);
+  const secOf = (id) => S.sections.find((s) => s.id === id);
+  const secName = (id) => (secOf(id) || {}).name || id;
+
+  /* ---- Room Service: one record per dish. Room Service shows its own sections PLUS every item
+     carrying the Room Service tag, wherever that item lives (same rule as the public site). ---- */
+  const rsTagged = (it) => (it.tags || []).includes(RS);
+  const rsView = () => ui.secFilter === RS || isRsBlock(ui.secFilter);
+  const rsBlockName = (s) => (s.group_id === RS ? s.name : (RS_BLOCKS.map[s.id] || s.name));
+  const rsRank = (n) => { const i = RS_BLOCKS.order.indexOf(n); return i < 0 ? 1000 : i; };
+  const inRs = (it) => { const s = secOf(it.section_id); return !!s && !s.archived && !s.is_setmenu && (s.group_id === RS || rsTagged(it)); };
+  const sharedItem = (it) => { const s = secOf(it.section_id); return !!s && s.group_id !== RS && rsTagged(it); };
+  function rsBlockList() {
+    const names = new Set();
+    D.activeSections().forEach((s) => {
+      if (s.is_setmenu) return;
+      if (s.group_id === RS || S.items.some((i) => i.section_id === s.id && i.visibility !== "archived" && rsTagged(i))) names.add(rsBlockName(s));
+    });
+    return [...names].sort((a, b) => rsRank(a) - rsRank(b));
+  }
+
+  /* Repaint without letting the page jump (a shorter list would otherwise pull the scroll position up). */
+  function keepScroll(fn) {
+    const y = window.scrollY;
+    fn();
+    if (window.scrollY !== y) window.scrollTo(0, y);
+  }
+  function selectSection(id) {
+    ui.secFilter = id;
+    if (!$("#itemList")) { renderItems(); return; }
+    keepScroll(() => {
+      $$(".side button[data-sec]").forEach((b) => b.classList.toggle("on", b.dataset.sec === id));
+      paintList();
+    });
+  }
   const findItem = (id) => S.items.find((x) => x.id === id);
   const fail = (err) => D.toast(D.friendly(err), { error: true });
 
@@ -18,6 +53,7 @@
   function scopeSections() {
     const act = D.activeSections();
     if (ui.secFilter === "all") return act;
+    if (isRsBlock(ui.secFilter)) return act.filter((s) => s.group_id === RS && s.name === ui.secFilter.slice(3));
     if (isGroup(ui.secFilter)) return act.filter((s) => s.group_id === ui.secFilter);
     return act.filter((s) => s.id === ui.secFilter);
   }
@@ -29,6 +65,10 @@
       : it.visibility === "archived";
 
   function scopeItems() {
+    if (rsView()) {
+      const all = S.items.filter(inRs);
+      return isRsBlock(ui.secFilter) ? all.filter((i) => rsBlockName(secOf(i.section_id)) === ui.secFilter.slice(3)) : all;
+    }
     const ids = new Set(scopeSections().map((s) => s.id));
     return S.items.filter((i) => ids.has(i.section_id));
   }
@@ -81,6 +121,7 @@
     if (it.visibility === "soldout") chips.push(`<span class="st sold">Sold out</span>`);
     if (it.visibility === "hidden") chips.push(`<span class="st hide">Hidden</span>`);
     if (arch) chips.push(`<span class="st arch">Archived</span>`);
+    if (!arch && sharedItem(it)) chips.push(`<span class="st both" title="One record, shown on both the Encima and Room Service menus">On both menus</span>`);
     const ed = D.editor() && !o.review;
     const acts = ed
       ? `<button type="button" class="btn small ghost" data-open>Edit</button>
@@ -115,6 +156,13 @@
     const rows = listItems();
     if (!rows.length) return emptyHTML();
     const one = single();
+    if (rsView()) {
+      const byBlock = new Map();
+      rows.forEach((r) => { const n = rsBlockName(secOf(r.section_id)); if (!byBlock.has(n)) byBlock.set(n, []); byBlock.get(n).push(r); });
+      return [...byBlock].sort((a, b) => rsRank(a[0]) - rsRank(b[0]))
+        .map(([n, arr]) => `<h3 class="sec-h">${esc(n)}<span>${arr.length}</span></h3>
+          <div class="list">${arr.map((r) => itemRow(r, { showSection: true })).join("")}</div>`).join("");
+    }
     if (one) return `<div class="list" data-section="${esc(one)}">${rows.map((r) => itemRow(r, { drag: canDrag() })).join("")}</div>`;
     const by = new Map();
     rows.forEach((r) => { if (!by.has(r.section_id)) by.set(r.section_id, []); by.get(r.section_id).push(r); });
@@ -129,7 +177,9 @@
     const chip = (id, label) =>
       `<button type="button" data-status="${id}" class="${ui.status === id ? "on" : ""}" aria-pressed="${ui.status === id}">${label} <span>${count(id)}</span></button>`;
     $("#statusChips").innerHTML = chip("all", "All") + chip("live", "Live") + chip("soldout", "Sold out") + chip("hidden", "Hidden") + chip("archived", "Archived");
-    $("#hint").textContent = canDrag() ? "Drag the handle on the left to reorder. Changes save automatically." : "";
+    $("#hint").textContent = canDrag() ? "Drag the handle on the left to reorder. Changes save automatically."
+      : rsView() ? "Every dish with the Room Service tag is listed here. Dishes marked “On both menus” are one record, so editing one here changes it on Encima too."
+      : "";
     $("#itemList").innerHTML = listHTML();
   }
 
@@ -138,9 +188,11 @@
     const act = D.activeSections();
     const btn = (id, label, cls = "") => `<button type="button" data-sec="${esc(id)}" class="${cls} ${ui.secFilter === id ? "on" : ""}">${esc(label)}</button>`;
     const used = new Set();
+    if (isRsBlock(ui.secFilter) && !rsBlockList().includes(ui.secFilter.slice(3))) ui.secFilter = RS;
     const groups = MENU.groups.map((g) => {
       const secs = act.filter((s) => s.group_id === g.id);
       secs.forEach((s) => used.add(s.id));
+      if (g.id === RS) return btn(g.id, g.label, "grp") + rsBlockList().map((n) => btn("rs:" + n, n, "sub")).join("");
       return btn(g.id, g.label, "grp") + secs.map((s) => btn(s.id, s.name, "sub")).join("");
     }).join("");
     const rest = act.filter((s) => !used.has(s.id)).map((s) => btn(s.id, s.name, "sub")).join("");
@@ -307,12 +359,14 @@
           <option value="hidden" ${it && it.visibility === "hidden" ? "selected" : ""}>Hidden from the menu</option>
         </select></label>`}
       </div>
+      ${it && sharedItem(it) ? `<p class="muted both-note">🛎 This dish is on both the Encima and Room Service menus. It is one record, so any change you save here shows on both.</p>` : ""}
       <label>Name<input name="name" required maxlength="120" value="${esc(it ? it.name : "")}" ${dis} ${ro ? "" : "autofocus"}></label>
       <label>Description<textarea name="description" ${dis}>${esc(it ? it.description || "" : "")}</textarea></label>
       ${priceFieldsHTML(it ? it.price : null, isNew, dis)}
       <fieldset class="tags" ${dis}><legend>Tags</legend>
         <div class="checks">${Object.entries(TAGS).map(([k, t]) =>
           `<label class="inline"><input type="checkbox" name="tag" value="${k}" ${it && (it.tags || []).includes(k) ? "checked" : ""}> ${t.icon} ${esc(t.label)}</label>`).join("")}</div>
+        <small class="muted">Tick “Room Service” to show this dish on the Room Service menu as well. It stays one record.</small>
       </fieldset>
       <div class="photos"><span class="lbl">Photos</span>
         <div class="thumbs" id="thumbs"></div>
@@ -767,10 +821,10 @@
       if (nav) { ui.view = nav.dataset.view; await paint(); return; }
       if (t.closest("[data-pages]")) { ui.view = "pages"; await paint(); return; }
       const sec = t.closest("[data-sec]");
-      if (sec) { ui.secFilter = sec.dataset.sec; renderItems(); return; }
+      if (sec) { selectSection(sec.dataset.sec); return; }
       const st = t.closest("[data-status]");
-      if (st) { ui.status = st.dataset.status; paintList(); return; }
-      if (t.closest("#clearFilters")) { ui.q = ""; ui.status = "all"; renderItems(); return; }
+      if (st) { ui.status = st.dataset.status; keepScroll(paintList); return; }
+      if (t.closest("#clearFilters")) { ui.q = ""; ui.status = "all"; keepScroll(renderItems); return; }
       if (t.closest("#manageSecs")) { openSectionManager(); return; }
       if (t.closest("#addItem") || t.closest("#addItemEmpty")) {
         openItemModal(null, { section_id: single() || (scopeSections()[0] || {}).id });
