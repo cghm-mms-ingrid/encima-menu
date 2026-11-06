@@ -2,7 +2,10 @@
   "use strict";
   if (typeof loadEncimaData === "function") await loadEncimaData();
   const $ = (s, r = document) => r.querySelector(s);
-  const GT = { fil: "tl", "zh-Hans": "zh-CN", "zh-Hant": "zh-TW" };
+  const PAGE_RS = window.ENCIMA_PAGE === "room-service";   /* /room-service/ shows ONLY the Room Service menu */
+  const ROOT = window.ENCIMA_ROOT || "";                    /* "" on the main page, "../" inside a folder */
+  /* Google Translate codes come from LANGS in i18n.js (language.google, or the code itself) */
+  const GT = Object.fromEntries(LANGS.filter((l) => l.google).map((l) => [l.code, l.google]));
 
   function setGoogtrans(value) {
     const host = location.hostname;
@@ -40,8 +43,8 @@
       location.reload();              // widget not ready yet; cookie will apply on reload
     }
   }
-  const state = { lang: "en", group: "food", block: "all", q: "", tags: new Set(), sort: "menu" };
-  const src = (typeof photoUrl === "function") ? photoUrl : (p) => p ? `images/${p}.webp` : "images/logo.webp";
+  const state = { lang: "en", group: PAGE_RS ? "roomservice" : "food", block: "all", q: "", tags: new Set(), sort: "menu" };
+  const src = (typeof photoUrl === "function") ? photoUrl : (p) => p ? `${ROOT}images/${p}.webp` : `${ROOT}images/logo.webp`;
 
   /* ---------- helpers ---------- */
   const store = {
@@ -90,18 +93,18 @@
     return [...map.values()].map((b, i) => ({ b, i })).sort((x, y) => rank(x.b.name) - rank(y.b.name) || x.i - y.i)
       .map(({ b }, i) => ({ ...b, tone: i % 2 ? "slate" : "orange" }));
   }
-  const BLOCKS_LIST = buildBlocks();
+  /* The main menu never shows Room Service; the /room-service/ page shows nothing else. */
+  const SHOWN_GROUPS = MENU.groups.filter((g) => PAGE_RS ? g.id === "roomservice" : g.id !== "roomservice");
+  const BLOCKS_LIST = buildBlocks().filter((b) => PAGE_RS ? b.group === "roomservice" : b.group !== "roomservice");
   const blockName = (b) => b.rs ? b.name : (b.secs.length === 1 && SECTION_NAMES[state.lang] && SECTION_NAMES[state.lang][b.secs[0].s.id]) || b.name;
 
   function detectLang() {
     const saved = store.get("encima-lang");
     if (saved && LANGS.some((l) => l.code === saved)) return saved;
     const n = (navigator.language || "en").toLowerCase();
-    if (n.startsWith("fil") || n.startsWith("tl")) return "fil";
     if (n.startsWith("zh")) return /tw|hk|mo|hant/.test(n) ? "zh-Hant" : "zh-Hans";
-    if (n.startsWith("ko")) return "ko";
-    if (n.startsWith("ja")) return "ja";
-    return "en";
+    const hit = LANGS.find((l) => (l.detect || []).some((pre) => n.startsWith(pre)));   /* prefixes set in i18n.js */
+    return hit ? hit.code : "en";
   }
   /* Brand names that must never be translated: Encima (Roofdeck Bar & Restaurant), City Garden Hotel (Makati), OpenTable. */
   const BRAND = /Encima(?:\s+Roofdeck)?(?:\s+Bar)?(?:\s+(?:and|&amp;)\s+Restaurant)?|City\s+Garden\s+Hotel(?:\s+Makati)?|OpenTable/gi;
@@ -119,7 +122,8 @@
     return `<span class="price">${parts.map((x) => `<small>${x}</small>`).join("")}</span>`;
   }
   const tagName = (id) => id === "roomservice" ? keep(tagLabel(id)) : esc(tagLabel(id));   /* "Room Service" stays English */
-  const tagIcons = (tags) => tags.map((id) => `<span class="tag" title="${esc(tagLabel(id))}" aria-label="${esc(tagLabel(id))}">${TAGS[id].icon}</span>`).join("");
+  const shownTags = (tags) => tags.filter((id) => id !== "roomservice");    /* the Room Service tag is never shown */
+  const tagIcons = (tags) => shownTags(tags).map((id) => `<span class="tag" title="${esc(tagLabel(id))}" aria-label="${esc(tagLabel(id))}">${TAGS[id].icon}</span>`).join("");
 
  /* ---------- filtering: an item must have AT LEAST ONE ticked tag ---------- */
 const tagScore = (it) => {
@@ -235,7 +239,7 @@ function sorted(entries) {
     });
 
     $("#lang").innerHTML = LANGS.map((l) =>
-      `<option value="${l.code}" ${l.code === state.lang ? "selected" : ""}>${l.label}</option>`
+      `<option value="${l.code}" translate="no" class="notranslate" ${l.code === state.lang ? "selected" : ""}>${l.label}</option>`
     ).join("");
 
     renderStoryPhotos();
@@ -263,6 +267,7 @@ function sorted(entries) {
      If nothing is picked, fall back to items tagged "Best Seller" (photos first). */
   const BEST_MAX = 4;
   function renderBest() {
+    if (!$("#bestGrid")) return;                          /* not on the Room Service page */
     const byId = new Map();
     MENU.sections.forEach((s, si) => s.items.forEach((it, ii) => { if (it.id != null) byId.set(String(it.id), [it, si, ii]); }));
 
@@ -277,19 +282,20 @@ function sorted(entries) {
     $("#bestGrid").innerHTML = all.slice(0, BEST_MAX).map(([it, si, ii]) => {
       const has = it.photos.length;
       return `<button class="bcard" data-s="${si}" data-i="${ii}">
-        <div class="bimg ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(tr(it, "name")) : ""}"></div>
+        <div class="bimg ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : ROOT + "images/logo.webp")}" alt="${has ? esc(tr(it, "name")) : ""}"></div>
         <h3 class="name notranslate" translate="no">${esc(it.name)}</h3>${tr(it, "desc") ? `<p class="desc">${esc(tr(it, "desc"))}</p>` : ""}${priceHTML(it.price)}</button>`;
     }).join("");
   }
 
   /* ---------- toolbar ---------- */
   function renderToolbar() {
-    $("#groups").innerHTML = MENU.groups.map((g) =>
-      `<button role="tab" data-g="${g.id}" aria-selected="${!state.q && g.id === state.group}">${g.id === "roomservice" ? keep(t(g.id)) : esc(t(g.id))}</button>`).join("");
+    $("#groups").hidden = PAGE_RS;                         /* single menu on /room-service/: no tabs */
+    $("#groups").innerHTML = PAGE_RS ? "" : SHOWN_GROUPS.map((g) =>
+      `<button role="tab" data-g="${g.id}" aria-selected="${!state.q && g.id === state.group}">${esc(t(g.id))}</button>`).join("");
 
     /* section dropdown: grouped by Food / Drinks / Set Menu */
     const sel = $("#sectionSel");
-    sel.innerHTML = `<option value="all">${esc(t("allSections"))}</option>` + MENU.groups.map((g) =>
+    sel.innerHTML = `<option value="all">${esc(t("allSections"))}</option>` + SHOWN_GROUPS.map((g) =>
       `<optgroup label="${esc(t(g.id))}" ${g.id === "roomservice" ? 'translate="no"' : ""}>${BLOCKS_LIST.filter((b) => b.group === g.id).map((b) =>
         `<option value="${b.id}" ${b.id === state.block ? "selected" : ""}>${esc(blockName(b))}</option>`).join("")}</optgroup>`).join("");
     sel.value = state.block;
@@ -301,8 +307,7 @@ function sorted(entries) {
     const present = new Set();
     BLOCKS_LIST.filter(inScope).forEach((b) => b.secs.forEach(({ s }) => s.items.forEach((i) => visible(i) && i.tags.forEach((x) => present.add(x)))));
     state.tags.forEach((x) => present.add(x));
-    const inRs = state.group === "roomservice" && !state.q;      /* every item there is Room Service: no need to filter by it */
-    const order = ["best", "veg", "spicy", "seafood", "pork", "peanut", "share", "organic", "vegan", "roomservice"].filter((x) => present.has(x) && !(inRs && x === "roomservice"));
+    const order = ["best", "veg", "spicy", "seafood", "pork", "peanut", "share", "organic", "vegan"].filter((x) => present.has(x));
     $("#filterList").innerHTML = order.map((id) =>
       `<label class="fopt"><input type="checkbox" data-tag="${id}" ${state.tags.has(id) ? "checked" : ""}><span>${TAGS[id].icon} ${tagName(id)}</span></label>`).join("");
     $("#filterBtn").textContent = state.tags.size ? `${t("filtersN")} · ${state.tags.size}` : t("all");
@@ -323,7 +328,7 @@ function sorted(entries) {
   /* ---------- menu ---------- */
   function cardHTML(it, si, ii, compact) {
     const name = tr(it, "name"), desc = tr(it, "desc"), sold = it.status === "soldout", has = it.photos && it.photos.length;
-    const thumb = compact ? "" : `<div class="thumb ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : "images/logo.webp")}" alt="${has ? esc(name) : ""}"></div>`;
+    const thumb = compact ? "" : `<div class="thumb ${has ? "" : "ph"}"><img loading="lazy" src="${esc(has ? src(it.photos[0]) : ROOT + "images/logo.webp")}" alt="${has ? esc(name) : ""}"></div>`;
     return `<button class="card ${compact ? "compact" : ""} ${sold ? "is-sold" : ""}" data-s="${si}" data-i="${ii}">${thumb}
       <div class="info"><div class="row1"><h4 class="name notranslate" translate="no">${esc(it.name)}</h4>${priceHTML(it.price)}</div>
       ${desc ? `<p class="desc">${esc(desc)}</p>` : ""}
@@ -470,10 +475,10 @@ function renderFlat() {
     const photos = it.photos && it.photos.length ? it.photos : [null];
     $("#carousel").innerHTML = `<div class="slides" id="slides">${photos.map((p) => p ?
       `<div class="slide"><img src="${esc(src(p))}" alt="${esc(name)}"></div>` :
-      `<div class="slide ph"><div><img src="images/logo.webp" alt=""><div>${esc(t("photo"))}</div></div></div>`).join("")}</div>
+      `<div class="slide ph"><div><img src="${ROOT}images/logo.webp" alt=""><div>${esc(t("photo"))}</div></div></div>`).join("")}</div>
       ${photos.length > 1 ? `<button class="car-btn prev" aria-label="Previous">‹</button><button class="car-btn next" aria-label="Next">›</button><div class="dots">${photos.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
     $("#mBody").innerHTML = `<h3 id="mTitle" class="notranslate" translate="no">${esc(it.name)}</h3>${priceHTML(it.price)}${desc ? `<p>${esc(desc)}</p>` : ""}
-      ${it.tags.length ? `<div class="legend">${it.tags.map((id) => `<span class="badge">${TAGS[id].icon} ${tagName(id)}</span>`).join("")}</div>` : ""}
+      ${shownTags(it.tags).length ? `<div class="legend">${shownTags(it.tags).map((id) => `<span class="badge">${TAGS[id].icon} ${tagName(id)}</span>`).join("")}</div>` : ""}
       ${it.pairing ? `<p class="pair"><b>${esc(t("pairing"))}:</b> ${esc(it.pairing)}</p>` : ""}`;
     cur = 0;
     const m = $("#modal"); lastFocus = document.activeElement; m.hidden = false; document.body.style.overflow = "hidden"; $("#mClose").focus();

@@ -1,14 +1,27 @@
 /* UI strings for launch languages. Marked NEEDS REVIEW by a native speaker before launch.
    Item names/descriptions fall back to English until translated in the admin (Phase 3). */
+/* =====================================================================
+   HOW TO ADD A LANGUAGE (everything is in this file)
+   1. Add ONE line to LANGS below.
+        code    : short id, e.g. "de"
+        label   : the language's own name first, English name in brackets, e.g. "Deutsch (German)"
+        google  : (only if different from code) the Google Translate code
+        detect  : (optional) browser-language prefixes that should pick it automatically
+   2. Copy the "Español" block at the bottom of this file, rename es -> your code and translate the
+      strings. Anything you leave out simply shows in English, so it is safe to do this in stages.
+   3. Make sure the Google code is listed in includedLanguages in index.html AND room-service/index.html
+      (most common languages already are).
+   The language menu labels are locked from Google Translate, so they always keep their own name.
+   ===================================================================== */
 const LANGS = [
   { code: "en", label: "English" },
-  { code: "fil", label: "Filipino" },
-  { code: "zh-Hans", label: "简体中文" },
-  { code: "zh-Hant", label: "繁體中文" },
-  { code: "ko", label: "한국어" },
-  { code: "ja", label: "日本語" },
-  { code: "es", label: "Español" }
-
+  { code: "fil", label: "Filipino", google: "tl", detect: ["fil", "tl"] },
+  { code: "zh-Hans", label: "简体中文 (Simplified Chinese)", google: "zh-CN" },
+  { code: "zh-Hant", label: "繁體中文 (Traditional Chinese)", google: "zh-TW" },
+  { code: "ko", label: "한국어 (Korean)", detect: ["ko"] },
+  { code: "ja", label: "日本語 (Japanese)", detect: ["ja"] },
+  { code: "es", label: "Español (Spanish)", detect: ["es"] },
+  { code: "fr", label: "Français (French)", detect: ["fr"] }
 ];
 
 const UI = {
@@ -89,3 +102,41 @@ _x("zh-Hans", { rsAvail: "每日供应", rsDial: "拨打", rsOrders: "点餐" })
 _x("zh-Hant", { rsAvail: "每日供應", rsDial: "撥打", rsOrders: "點餐" });
 _x("ko", { rsAvail: "매일 이용 가능", rsDial: "주문 시 다이얼", rsOrders: "" });
 _x("ja", { rsAvail: "毎日ご利用可能", rsDial: "ダイヤル", rsOrders: "でご注文" });
+
+
+/* =====================================================================
+   Español (Spanish). NEEDS REVIEW by a native speaker before launch.
+   ===================================================================== */
+UI.es = {
+  food: "Comida", drinks: "Bebidas", setmenu: "Menú Fijo", search: "Buscar en el menú…", all: "Todo", filters: "Filtros", clear: "Borrar",
+  reserve: "Reservar en OpenTable", hours: "Abierto todos los días", vat: "Todos los precios incluyen IVA. Sin cargo por servicio.",
+  noResults: "Ningún resultado coincide con tu búsqueda o filtros.", soldOut: "Agotado", tbd: "Precio a consultar", glass: "Copa", bottle: "Botella", shot: "Chupito", glass200: "200 ml",
+  pairing: "Marida con", photo: "Foto próximamente", close: "Cerrar", tagline: "Bar y Restaurante", menu: "Menú", visit: "Visítanos", items: "opciones",
+  chooseOne: "Elige uno", best: "Más vendidos",
+  optTitle: "Ordenar y filtrar", searchBtn: "Buscar en el menú", showResults: "Ver resultados", navBest: "Más vendidos", navStory: "Nuestra historia", navContact: "Contacto",
+  reserveShort: "Reservar", viewFull: "Ver el menú completo", sectionLbl: "Sección", sortLbl: "Ordenar por", allSections: "Todas las secciones", sortMenu: "Orden del menú",
+  sortDesc: "Precio: de mayor a menor", sortAsc: "Precio: de menor a mayor", done: "Listo", backFull: "← Volver al menú completo", activeFilters: "Mostrando solo",
+  fact2t: "Abierto todos los días", bestTitle: "Más vendidos", menuTitle: "Come, bebe, disfruta", filtersN: "Filtros",
+  rsAvail: "Disponible todos los días", rsDial: "Marque", rsOrders: "para pedidos"
+};
+TAG_LABELS.es = { best: "Más vendido", spicy: "Picante", veg: "Vegetariano", pork: "Contiene cerdo", seafood: "Mariscos", peanut: "Contiene cacahuetes", share: "Para compartir", organic: "Orgánico", vegan: "Vegano certificado" };
+SECTION_NAMES.es = { starters: "Entrantes", salads: "Ensaladas", especiales: "Especiales", pasta: "Pasta", pizza: "Pizza", "naked-burrito": "Naked Burrito", tacos: "Tacos | Burritos | Sándwiches", dessert: "Postres", sides: "Acompañamientos" };
+
+
+/* =====================================================================
+   Français (French). NEEDS REVIEW by a native speaker before launch.
+   ===================================================================== */
+UI.fr = {
+  food: "Plats", drinks: "Boissons", setmenu: "Menu fixe", search: "Rechercher dans le menu…", all: "Tout", filters: "Filtres", clear: "Effacer",
+  reserve: "Réserver sur OpenTable", hours: "Ouvert tous les jours", vat: "Tous les prix sont TTC. Pas de frais de service.",
+  noResults: "Aucun résultat ne correspond à votre recherche ou à vos filtres.", soldOut: "Épuisé", tbd: "Prix sur demande", glass: "Verre", bottle: "Bouteille", shot: "Shot", glass200: "200 ml",
+  pairing: "Accompagne", photo: "Photo bientôt disponible", close: "Fermer", tagline: "Bar & Restaurant", menu: "Menu", visit: "Venez nous voir", items: "articles",
+  chooseOne: "Au choix", best: "Meilleures ventes",
+  optTitle: "Trier et filtrer", searchBtn: "Rechercher dans le menu", showResults: "Voir les résultats", navBest: "Meilleures ventes", navStory: "Notre histoire", navContact: "Contact",
+  reserveShort: "Réserver", viewFull: "Voir le menu complet", sectionLbl: "Section", sortLbl: "Trier par", allSections: "Toutes les sections", sortMenu: "Ordre du menu",
+  sortDesc: "Prix : décroissant", sortAsc: "Prix : croissant", done: "Terminé", backFull: "← Retour au menu complet", activeFilters: "Affichage limité à",
+  fact2t: "Ouvert tous les jours", bestTitle: "Meilleures ventes", menuTitle: "Mangez, buvez, savourez", filtersN: "Filtres",
+  rsAvail: "Disponible tous les jours", rsDial: "Composez le", rsOrders: "pour commander"
+};
+TAG_LABELS.fr = { best: "Meilleure vente", spicy: "Épicé", veg: "Végétarien", pork: "Contient du porc", seafood: "Fruits de mer", peanut: "Contient des arachides", share: "À partager", organic: "Bio", vegan: "Certifié végan" };
+SECTION_NAMES.fr = { starters: "Entrées", salads: "Salades", especiales: "Spécialités", pasta: "Pâtes", pizza: "Pizza", "naked-burrito": "Naked Burrito", tacos: "Tacos | Burritos | Sandwichs", dessert: "Desserts", sides: "Accompagnements" };

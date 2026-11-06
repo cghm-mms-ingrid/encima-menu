@@ -293,3 +293,12 @@ select{font:inherit;font-size:.85rem;padding:8px 10px;border:1px solid var(--lin
 .rsinfo p{margin:0}
 .rsinfo b{font-weight:700}
 @media (max-width:480px){ .groups button{padding:8px 5px;font-size:.7rem} }
+
+/* Tab bar is hidden on the Room Service page (only one menu there) */
+.groups[hidden]{display:none}
+/* Language menu holds long names like "简体中文 (Simplified Chinese)": keep it from stretching the header on phones */
+#lang{max-width:190px;text-overflow:ellipsis}
+@media (max-width:480px){ #lang{max-width:118px;font-size:.8rem;padding:8px 6px} }
+@media (max-width:360px){ #lang{max-width:84px} .top-tools{gap:6px} }
+/* Room Service page has no Reserve button, so the language menu can show its full name */
+@media (max-width:480px){ .page-rs #lang{max-width:min(180px,calc(100vw - 215px))} }

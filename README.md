@@ -43,19 +43,33 @@ values ('THEIR-EMAIL', 'approver', 'Executive chef');
 
 Then invite that email in Authentication → Users.
 
-## Room Service tab
+## Room Service page (hidden link)
 
-The **Room Service** tab sits next to Food / Drinks / Set Menu. Its label and the tag are always shown in English.
+Room Service has its own page: **`/room-service/`** (example: `https://YOUR-SITE.netlify.app/room-service/`).
 
-- **Room-service-only dishes** live in Room Service sections (e.g. All Day Breakfast, Filipino Breakfast). In the desk, **Add section → Menu: Room Service**, then add items as usual. Add, edit, hide, sold out, delete all work the same as the rest of the menu.
-- **Dishes on both menus** are single records tagged **Room Service** (tick the tag on the item in the desk). They show in their normal tab and in the Room Service tab. Untick to remove them from the tab.
-- Inside the tab, sections are merged by name so it reads like the room service menu (layout list: `RS_BLOCKS` in `js/data.js`). A new section with a new name simply appears at the end; a section named like an existing one (e.g. "Dessert") joins it.
-- **Hours and dial number** shown at the top of the tab: desk **Pages → Room Service**.
-- **One-time load into Supabase:** run `supabase/room-service.sql` in the SQL editor (after `schema.sql` and `seed.sql`). It only adds rows, and is safe to run again. It is generated from `js/data.js` with `node tools/gen-roomservice-sql.js`.
+- It is **not linked anywhere** on the public menu: no tab, no entry in the Section dropdown, no "Room Service" tag or filter. Share the link (or a QR code) with guests directly.
+- Search engines are told to skip it (`robots.txt`, a `noindex` meta tag and an `X-Robots-Tag` header). Anyone with the link can open it.
+- It uses the same data, look, languages and search as the main menu, and shows only the Room Service menu. Hours and dial number at the top come from the desk: **Pages -> Room Service**.
+- **Nothing changes in the staff desk.** Room-service-only dishes still live in Room Service sections (**Add section -> Menu: Room Service**). Dishes on both menus are single records ticked with the **Room Service** tag; they appear in their normal tab on the main menu and on `/room-service/`.
+- Inside the page, sections are merged by name so it reads like the room service menu (layout list: `RS_BLOCKS` in `js/data.js`).
+- **One-time load into Supabase:** run `supabase/room-service.sql` in the SQL editor (after `schema.sql` and `seed.sql`). It only adds rows and is safe to run again. It is generated from `js/data.js` with `node tools/gen-roomservice-sql.js`.
+- How it works: `room-service/index.html` sets `window.ENCIMA_PAGE = "room-service"` before loading the same scripts. `js/app.js` then shows only the Room Service group there and hides it on the main page.
+
+## Languages
+
+The language menu shows each language by its own name, with the English name in brackets: English, Filipino, Español (Spanish), Français (French), 日本語 (Japanese), 한국어 (Korean), 简体中文 (Simplified Chinese), 繁體中文 (Traditional Chinese). The menu is locked from Google Translate (`translate="no"`), so the labels never change.
+
+**To add a language** everything is in `js/i18n.js` (full steps are in the comment at the top of that file):
+
+1. Add one line to `LANGS` (code, label, optional `google` code and `detect` prefixes).
+2. Copy the Spanish block at the bottom of the file, change `es` to the new code and translate the strings. Anything missing simply shows in English, so it can be done in stages.
+3. Check the Google code is in `includedLanguages` in `index.html` and `room-service/index.html`.
+
+Spanish and French strings were written without a native-speaker review: have someone check them before launch.
 
 ## Never translated
 
-Brand and contact details stay as written in every language: Encima Roofdeck Bar & Restaurant (logo, header, hero), City Garden Hotel Makati, OpenTable, the address, phone, email, opening hours, dish names, the "Room Service" tab and tag, and prices (₱, Glass / Bottle / Shot). Allergen and diet tags (Pork, Peanuts, Vegetarian...) are translated on purpose, for guest safety.
+Brand and contact details stay as written in every language: Encima Roofdeck Bar & Restaurant (logo, header, hero), City Garden Hotel Makati, OpenTable, the address, phone, email, opening hours, dish names, the "Room Service" page title, and prices (₱, Glass / Bottle / Shot). Allergen and diet tags (Pork, Peanuts, Vegetarian...) are translated on purpose, for guest safety.
 
 ## Files to edit by hand (optional)
 

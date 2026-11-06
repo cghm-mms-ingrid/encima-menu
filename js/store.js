@@ -57,7 +57,8 @@ function remoteItem(it) {
 }
 
 function photoUrl(p) {
-  if (!p) return "images/logo.webp";
+  const root = window.ENCIMA_ROOT || "";      /* "../" on pages inside a folder, e.g. /room-service/ */
+  if (!p) return root + "images/logo.webp";
   if (/^https?:\/\//i.test(p) || p.startsWith("data:") || p.includes("/")) return p;
-  return "images/" + p + ".webp";
+  return root + "images/" + p + ".webp";
 }
