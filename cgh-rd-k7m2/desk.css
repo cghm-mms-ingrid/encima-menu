@@ -216,3 +216,22 @@ dialog.is-busy .m-body{opacity:.7;pointer-events:none}
 .ss-body{display:grid;gap:8px;min-width:0}
 .ss-acts{display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:relative}
 @media(max-width:480px){.story-slot{grid-template-columns:1fr}.ss-prev{width:100%;height:150px}}
+
+/* ---------- photo gallery ---------- */
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));grid-auto-rows:max-content;align-content:start;gap:12px}
+.ph-grid.pk{max-height:52vh;overflow-y:auto;padding:2px}
+.ph{margin:0;position:relative;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.ph-img{display:block;width:100%;height:0;padding:0 0 100%;border:0;margin:0;background:#f4ebe4;cursor:pointer;position:relative;overflow:hidden;flex:none}
+.ph-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.ph-img:disabled{cursor:default;opacity:.55}
+.ph-sel{position:absolute;top:8px;left:8px;background:rgba(255,255,255,.92);border-radius:8px;padding:4px 5px;display:flex;cursor:pointer}
+.ph-sel input{width:18px;height:18px;margin:0;cursor:pointer}
+.ph-tick{position:absolute;left:8px;bottom:8px;background:var(--slate);color:#fff;font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:999px}
+.ph figcaption{padding:8px 10px 10px;display:grid;gap:2px;min-width:0}
+.ph figcaption b{font-size:.8rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph figcaption small{font-size:.72rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ph:not(.is-used):not(.is-added) figcaption em{color:var(--danger);font-style:normal;font-weight:600}
+.ph-bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.ph-big{width:100%;max-height:46vh;object-fit:contain;border-radius:12px;background:#f4ebe4}
+.ph-use{margin:6px 0 8px;padding-left:18px;display:grid;gap:4px}
+#pkQ{margin-bottom:2px}

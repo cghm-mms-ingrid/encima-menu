@@ -18,6 +18,30 @@
   D.activeSections = () => S.sections.filter((s) => !s.archived);
   D.itemsOf = (sectionId) => S.items.filter((i) => i.section_id === sectionId);
 
+  /* Where each uploaded photo is used: Map(storage path -> { items: [{id, name, archived}], pages: bool }).
+     opts.exceptItem ignores one item (the one being edited/deleted); opts.exceptSettings ignores the Pages content. */
+  D.photoUsage = (opts = {}) => {
+    const use = new Map();
+    const add = (url, who) => {
+      const p = D.storagePath(url);
+      if (!p) return;
+      if (!use.has(p)) use.set(p, { items: [], pages: false });
+      if (who) use.get(p).items.push(who); else use.get(p).pages = true;
+    };
+    S.items.forEach((i) => {
+      if (i.id === opts.exceptItem) return;
+      (i.photos || []).forEach((u) => add(u, { id: i.id, name: i.name, archived: i.visibility === "archived" }));
+    });
+    if (!opts.exceptSettings) {
+      (function walk(v) {
+        if (typeof v === "string") add(v);
+        else if (Array.isArray(v)) v.forEach(walk);
+        else if (v && typeof v === "object") Object.values(v).forEach(walk);
+      })(S.settings && S.settings.payload);
+    }
+    return use;
+  };
+
   const must = (res, fallback) => {
     if (res.error) throw res.error;
     if (!res.data || (Array.isArray(res.data) && !res.data.length)) throw new Error(fallback);
@@ -58,7 +82,7 @@
       const res = await sb.from("items").delete().eq("id", item.id).select("id");
       must(res, "Couldn’t delete this item. You may not have permission, or it was already removed.");
       await sb.from("review_comments").delete().eq("target_type", "item").eq("target_id", item.id); // best effort
-      await D.api.removePhotos(item.photos || []);
+      await D.api.removePhotos(item.photos || [], { exceptItem: item.id });
     },
     async setVisibility(id, visibility) {
       return D.api.updateItem(id, { visibility });
@@ -75,13 +99,47 @@
       return sb.storage.from("menu-photos").getPublicUrl(path).data.publicUrl;
     },
     /* Deletes only files that live in our bucket; local image names are left alone. Never throws. */
-    async removePhotos(urls) {
-      const paths = (urls || []).map(D.storagePath).filter(Boolean);
+    async removePhotos(urls, opts = {}) {
+      /* A photo can be shared (picked from the gallery), so never delete a file another item or page still uses. */
+      const use = D.photoUsage(opts);
+      const paths = [...new Set((urls || []).map(D.storagePath).filter(Boolean))].filter((p) => !use.has(p));
       if (!paths.length) return;
       try {
         const { error } = await sb.storage.from("menu-photos").remove(paths);
         if (error) console.warn("Photo cleanup:", error.message);
       } catch (e) { console.warn("Photo cleanup:", e); }
+    },
+
+    /* ----- photo library (everything in the menu-photos bucket) ----- */
+    async listPhotos() {
+      const bucket = sb.storage.from("menu-photos");
+      const files = [];
+      async function walk(prefix) {
+        const folders = [];
+        for (let offset = 0; ; offset += 100) {
+          const { data, error } = await bucket.list(prefix, { limit: 100, offset, sortBy: { column: "name", order: "asc" } });
+          if (error) throw error;
+          if (!data || !data.length) break;
+          data.forEach((e) => {
+            const full = prefix ? prefix + "/" + e.name : e.name;
+            if (e.id === null) folders.push(full);
+            else if (e.name !== ".emptyFolderPlaceholder") files.push({
+              path: full, url: bucket.getPublicUrl(full).data.publicUrl,
+              size: (e.metadata && e.metadata.size) || 0, created: e.created_at || e.updated_at || null
+            });
+          });
+          if (data.length < 100) break;
+        }
+        for (let i = 0; i < folders.length; i += 6) await Promise.all(folders.slice(i, i + 6).map(walk));
+      }
+      await walk("");
+      return files.sort((a, b) => String(b.created).localeCompare(String(a.created)));
+    },
+    async deletePhotos(paths) {
+      const { data, error } = await sb.storage.from("menu-photos").remove(paths);
+      if (error) throw error;
+      if (!data || !data.length) throw new Error("Couldn’t delete. You may not have permission, or the photo was already removed.");
+      return data.length;
     },
 
     /* ----- sections ----- */

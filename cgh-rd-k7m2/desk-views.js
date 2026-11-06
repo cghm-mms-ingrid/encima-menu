@@ -6,7 +6,7 @@
   const { $, $$, esc, stLabel, stClass } = D;
   const S = D.state;
   const api = D.api;
-  const ui = (D.ui = { view: "items", secFilter: "all", status: "all", q: "" });
+  const ui = (D.ui = { view: "items", secFilter: "all", status: "all", q: "", phf: "all", phq: "", photos: [], sel: new Set() });
 
   const RS = "roomservice";
   const isGroup = (id) => MENU.groups.some((g) => g.id === id);
@@ -104,6 +104,7 @@
     renderShell();
     if (ui.view === "review") return renderReview();
     if (ui.view === "pages") { await renderPages(token); return; }
+    if (ui.view === "photos") { await renderPhotos(token); return; }
     renderItems();
   }
   /* After data changed: repaint what is on screen without jumping to the top. */
@@ -370,7 +371,7 @@
       </fieldset>
       <div class="photos"><span class="lbl">Photos</span>
         <div class="thumbs" id="thumbs"></div>
-        ${ro ? "" : `<label class="file"><input type="file" id="photoFile" accept="image/*"><span class="btn small ghost">Add photo</span></label><small class="muted">JPG, PNG or WebP, up to 5 MB. The first photo is the main one.</small>`}
+        ${ro ? "" : `<label class="file"><input type="file" id="photoFile" accept="image/*"><span class="btn small ghost">Add photo</span></label><button type="button" class="btn small ghost" id="pickPhoto">Choose from uploaded photos</button><small class="muted">JPG, PNG or WebP, up to 5 MB. The first photo is the main one.</small>`}
       </div>
       <label>Wine pairing note<input name="pairing" value="${esc((it && it.pairing) || "")}" ${dis}></label>
       ${extra.courses ? `<div id="courses">${extra.courses.map((c, i) => courseHTML(c, i, ro)).join("")}</div>` : ""}
@@ -414,6 +415,8 @@
       m.markDirty();
       paintThumbs();
     });
+    const pickBtn = $("#pickPhoto", m.el);
+    if (pickBtn) pickBtn.addEventListener("click", () => openPhotoPicker(photos, () => { m.markDirty(); paintThumbs(); }));
     const file = $("#photoFile", m.el);
     if (file) file.addEventListener("change", async () => {
       const f = file.files[0];
@@ -474,7 +477,7 @@
           await api.updateItem(it.id, patch);
         }
         saved = true;
-        await api.removePhotos([...original, ...added].filter((u) => !photos.includes(u)));
+        await api.removePhotos([...original, ...added].filter((u) => !photos.includes(u)), { exceptItem: itemId });
         await api.loadAll();
         m.close(true);
         refresh();
@@ -729,8 +732,171 @@
     /* Saved. Delete photos that are no longer used (old ones that were replaced, and any unused uploads). */
     const keep = new Set(storyPhotos.map((x) => x.url));
     const old = (Array.isArray(prev.storyPhotos) ? prev.storyPhotos : []).map((x) => x && x.url);
-    await api.removePhotos([...old, ...form._uploaded].filter((u) => u && !keep.has(u)));
+    await api.removePhotos([...old, ...form._uploaded].filter((u) => u && !keep.has(u)), { exceptSettings: true });
     form._uploaded = [];
+  }
+
+
+  /* ============ photo gallery ============ */
+  const photoName = (path) => path.split("/").pop().replace(/^\d{10,}-/, "");
+  const kb = (n) => (n >= 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(n / 1024)) + " KB");
+  const usedBy = (u) => {
+    if (!u) return "";
+    const names = u.items.map((i) => i.name + (i.archived ? " (archived)" : ""));
+    if (u.pages) names.push("Our Story / Pages");
+    return names.length > 3 ? names.slice(0, 3).join(", ") + ` +${names.length - 3} more` : names.join(", ");
+  };
+
+  async function renderPhotos(token) {
+    $("#main").innerHTML = `<div class="pane">
+      <div class="row head"><h2>Photos</h2><p class="muted grow" id="phCount"></p></div>
+      <div class="filters">
+        <input type="search" id="phq" placeholder="Search by file name or dish" aria-label="Search photos" value="${esc(ui.phq)}" autocomplete="off">
+        <div class="chips-row" id="phChips" role="group" aria-label="Filter photos"></div>
+      </div>
+      <div class="ph-bar" id="phBar" hidden></div>
+      <p class="hint" id="phHint"></p>
+      <div id="phGrid" class="ph-grid"><p class="muted">Loading photos…</p></div></div>`;
+    try {
+      const files = await api.listPhotos();
+      if (token !== paintToken || ui.view !== "photos") return;
+      ui.photos = files;
+    } catch (e) {
+      if (token !== paintToken) return;
+      $("#phGrid").innerHTML = `<div class="empty"><p>Couldn’t load the photos: ${esc(D.friendly(e))}</p></div>`;
+      return;
+    }
+    paintPhotos();
+  }
+
+  function photoRows() {
+    const use = D.photoUsage();
+    const q = ui.phq.trim().toLowerCase();
+    const base = ui.photos.filter((f) => !q || photoName(f.path).toLowerCase().includes(q)
+      || ((use.get(f.path) || { items: [] }).items.some((i) => i.name.toLowerCase().includes(q))));
+    const isUsed = (f) => use.has(f.path);
+    return { use, base, isUsed,
+      rows: base.filter((f) => ui.phf === "all" || (ui.phf === "unused" ? !isUsed(f) : isUsed(f))) };
+  }
+
+  function paintBar() {
+    const bar = $("#phBar");
+    if (!bar) return;
+    if (!D.editor()) { bar.hidden = true; return; }
+    const { rows, isUsed } = photoRows();
+    const free = rows.filter((f) => !isUsed(f));
+    ui.sel = new Set([...ui.sel].filter((p) => ui.photos.some((f) => f.path === p) && !isUsed({ path: p })));
+    bar.hidden = !free.length && !ui.sel.size;
+    bar.innerHTML = `<button type="button" class="btn small ghost" id="phSelUnused" ${free.length ? "" : "disabled"}>Select all unused (${free.length})</button>
+      <button type="button" class="btn small ghost" id="phClear" ${ui.sel.size ? "" : "disabled"}>Clear selection</button>
+      <button type="button" class="btn small ghost danger" id="phDelSel" ${ui.sel.size ? "" : "disabled"}>Delete selected${ui.sel.size ? " (" + ui.sel.size + ")" : ""}</button>`;
+  }
+
+  function paintPhotos() {
+    if (!$("#phGrid")) return;
+    const { use, base, isUsed, rows } = photoRows();
+    const n = (st) => base.filter((f) => st === "all" || (st === "unused" ? !isUsed(f) : isUsed(f))).length;
+    const chip = (id, label) => `<button type="button" data-pfilter="${id}" class="${ui.phf === id ? "on" : ""}" aria-pressed="${ui.phf === id}">${label} <span>${n(id)}</span></button>`;
+    $("#phChips").innerHTML = chip("all", "All") + chip("unused", "Unused") + chip("used", "In use");
+    $("#phCount").textContent = ui.photos.length ? `${ui.photos.length} uploaded photo${ui.photos.length === 1 ? "" : "s"} · ${kb(ui.photos.reduce((a, f) => a + f.size, 0))}` : "";
+    $("#phHint").textContent = D.editor()
+      ? "Photos that no dish or page uses are marked Unused and can be deleted. Click a photo for details. Photos already in the project’s images folder aren’t listed here."
+      : "Click a photo for details.";
+    $("#phGrid").innerHTML = rows.length
+      ? rows.map((f) => {
+          const u = use.get(f.path);
+          return `<figure class="ph${u ? " is-used" : ""}" data-path="${esc(f.path)}">
+            <button type="button" class="ph-img" data-ph-open aria-label="Open ${esc(photoName(f.path))}"><img src="${esc(f.url)}" alt="" loading="lazy"></button>
+            ${D.editor() && !u ? `<label class="ph-sel"><input type="checkbox" data-ph-sel ${ui.sel.has(f.path) ? "checked" : ""} aria-label="Select ${esc(photoName(f.path))}"></label>` : ""}
+            <figcaption><b title="${esc(photoName(f.path))}">${esc(photoName(f.path))}</b>
+              <small>${kb(f.size)} · ${u ? "Used by " + esc(usedBy(u)) : "<em>Unused</em>"}</small></figcaption></figure>`;
+        }).join("")
+      : `<div class="empty"><p>${ui.photos.length ? "No photos match." : "No photos have been uploaded yet."}</p></div>`;
+    paintBar();
+  }
+
+  async function deletePhotoFiles(paths) {
+    const one = paths.length === 1;
+    const ok = await D.confirmBox({
+      title: one ? `Delete “${photoName(paths[0])}”?` : `Delete ${paths.length} photos?`,
+      body: `${one ? "This photo" : "These photos"} will be permanently deleted from storage. This can’t be undone.`,
+      confirm: one ? "Delete photo" : `Delete ${paths.length} photos`, cancel: "Keep", danger: true
+    });
+    if (!ok) return false;
+    try {
+      await api.loadAll();                                   /* re-check: someone may have started using one meanwhile */
+      const use = D.photoUsage();
+      const busy = paths.filter((p) => use.has(p));
+      if (busy.length) { D.toast(`${busy.length} of these ${busy.length === 1 ? "is" : "are"} now in use, so nothing was deleted. Refresh and try again.`, { error: true }); return false; }
+      await api.deletePhotos(paths);
+      ui.photos = ui.photos.filter((f) => !paths.includes(f.path));
+      paths.forEach((p) => ui.sel.delete(p));
+      keepScroll(paintPhotos);
+      D.toast(one ? "Photo deleted." : `${paths.length} photos deleted.`);
+      return true;
+    } catch (e) { fail(e); return false; }
+  }
+
+  function openPhotoDetail(path) {
+    const f = ui.photos.find((x) => x.path === path);
+    if (!f) return;
+    const u = D.photoUsage().get(path);
+    const ed = D.editor();
+    const m = D.modal({
+      title: photoName(path), small: true,
+      body: `<img class="ph-big" src="${esc(f.url)}" alt="">
+        <p class="muted">${kb(f.size)}${f.created ? " · uploaded " + esc(new Date(f.created).toLocaleDateString()) : ""}<br><small>${esc(path)}</small></p>
+        ${u
+          ? `<div><b>Used by</b><ul class="ph-use">${u.items.map((i) => `<li>${esc(i.name)}${i.archived ? " (archived)" : ""} <button type="button" class="link" data-edit-item="${esc(i.id)}">${ed ? "Edit" : "View"}</button></li>`).join("")}${u.pages ? `<li>Our Story / Pages</li>` : ""}</ul>
+             ${ed ? `<p class="muted">To delete this photo, first remove it from the dish (Edit → ✕ on the photo). It is then deleted automatically if nothing else uses it.</p>` : ""}</div>`
+          : `<p class="muted">Not used by any dish or page.</p>`}`,
+      footer: `<div class="foot-l"><button type="button" class="link" data-copy>Copy link</button></div>
+        <div class="foot-r">${ed && !u ? `<button type="button" class="btn ghost danger" data-del>Delete photo</button>` : ""}<button type="button" class="btn" data-close>Close</button></div>`
+    });
+    m.el.addEventListener("click", async (e) => {
+      const edit = e.target.closest("[data-edit-item]");
+      if (edit) { m.close(true); openItemModal(edit.dataset.editItem); return; }
+      if (e.target.closest("[data-copy]")) {
+        try { await navigator.clipboard.writeText(f.url); D.toast("Link copied."); } catch (x) { D.toast("Couldn’t copy. Select the link manually.", { error: true }); }
+        return;
+      }
+      if (e.target.closest("[data-del]") && await deletePhotoFiles([path])) m.close(true);
+    });
+  }
+
+  /* Pick photos that are already uploaded (used from the item dialog). Stays open so several can be added. */
+  async function openPhotoPicker(have, onPick) {
+    const m = D.modal({
+      title: "Choose from uploaded photos", wide: true,
+      body: `<input type="search" id="pkQ" placeholder="Search by file name or dish" autocomplete="off" aria-label="Search photos">
+        <div class="ph-grid pk" id="pkGrid"><p class="muted">Loading photos…</p></div>`,
+      footer: `<button type="button" class="btn" data-close>Done</button>`
+    });
+    /* typing in the search box must not count as "unsaved changes" for this dialog */
+    ["input", "change"].forEach((t) => m.body.addEventListener(t, (e) => e.stopPropagation()));
+    let files = [];
+    const paint = () => {
+      const q = $("#pkQ", m.el).value.trim().toLowerCase();
+      const use = D.photoUsage();
+      const rows = files.filter((f) => !q || photoName(f.path).toLowerCase().includes(q)
+        || ((use.get(f.path) || { items: [] }).items.some((i) => i.name.toLowerCase().includes(q))));
+      $("#pkGrid", m.el).innerHTML = rows.length ? rows.map((f) => {
+        const u = use.get(f.path), has = have.includes(f.url);
+        return `<figure class="ph${has ? " is-added" : ""}"><button type="button" class="ph-img" data-pick="${esc(f.url)}" ${has ? "disabled" : ""}>
+          <img src="${esc(f.url)}" alt="" loading="lazy">${has ? `<span class="ph-tick">Added</span>` : ""}</button>
+          <figcaption><b title="${esc(photoName(f.path))}">${esc(photoName(f.path))}</b><small>${u ? "Used by " + esc(usedBy(u)) : "<em>Unused</em>"}</small></figcaption></figure>`;
+      }).join("") : `<p class="muted">${files.length ? "No photos match." : "No photos have been uploaded yet."}</p>`;
+    };
+    try { files = await api.listPhotos(); } catch (e) { m.error(D.friendly(e)); $("#pkGrid", m.el).innerHTML = ""; return; }
+    paint();
+    $("#pkQ", m.el).addEventListener("input", paint);
+    m.el.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-pick]");
+      if (!b || b.disabled) return;
+      have.push(b.dataset.pick);
+      onPick(b.dataset.pick);
+      paint();
+    });
   }
 
   /* ============ drag to reorder ============ */
@@ -820,6 +986,12 @@
       const nav = t.closest("[data-view]");
       if (nav) { ui.view = nav.dataset.view; await paint(); return; }
       if (t.closest("[data-pages]")) { ui.view = "pages"; await paint(); return; }
+      if (t.closest("[data-ph-open]")) { openPhotoDetail(t.closest(".ph").dataset.path); return; }
+      const pf = t.closest("[data-pfilter]");
+      if (pf) { ui.phf = pf.dataset.pfilter; keepScroll(paintPhotos); return; }
+      if (t.closest("#phSelUnused")) { const { rows, isUsed } = photoRows(); rows.filter((f) => !isUsed(f)).forEach((f) => ui.sel.add(f.path)); keepScroll(paintPhotos); return; }
+      if (t.closest("#phClear")) { ui.sel.clear(); keepScroll(paintPhotos); return; }
+      if (t.closest("#phDelSel")) { await deletePhotoFiles([...ui.sel]); return; }
       const sec = t.closest("[data-sec]");
       if (sec) { selectSection(sec.dataset.sec); return; }
       const st = t.closest("[data-status]");
@@ -844,6 +1016,8 @@
     });
 
     desk.addEventListener("change", (e) => {
+      const sel = e.target.closest && e.target.closest("[data-ph-sel]");
+      if (sel) { const path = sel.closest(".ph").dataset.path; if (sel.checked) ui.sel.add(path); else ui.sel.delete(path); paintBar(); return; }
       const inp = e.target.closest && e.target.closest("[data-story-file]");
       if (inp) onStoryFile(inp);
     });
@@ -858,6 +1032,7 @@
 
     let debounce = 0;
     desk.addEventListener("input", (e) => {
+      if (e.target.id === "phq") { ui.phq = e.target.value; clearTimeout(debounce); debounce = setTimeout(paintPhotos, 120); return; }
       if (e.target.id !== "q") return;
       ui.q = e.target.value;
       clearTimeout(debounce);
