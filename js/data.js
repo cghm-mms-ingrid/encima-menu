@@ -11,7 +11,8 @@ const MENU = {
   groups: [
     { id: "food", label: "Food" },
     { id: "drinks", label: "Drinks" },
-    { id: "setmenu", label: "Set Menu" }
+    { id: "setmenu", label: "Set Menu" },
+    { id: "roomservice", label: "Room Service" }
   ],
   sections: [
     /* ---------- FOOD ---------- */
@@ -198,8 +199,95 @@ const MENU = {
         { title: "Main Courses", choice: true, options: ["Grilled Hanging Tender Steak", "Bacon-Wrapped Pork Tenderloin", "Pan-Seared Salmon Fillet"] },
         { title: "Dessert (choose two)", choice: false, options: ["Brownies Ala Mode", "Raspberry Red Wine Sorbet"] }
       ]})
+    ]},
+
+    /* ---------- ROOM SERVICE (items that exist ONLY on the room service menu) ----------
+       Dishes that are on both menus are not repeated here: they carry the "roomservice" tag
+       (see RS_SHARED below) and appear in both tabs. */
+    { id: "rs-breakfast", group: "roomservice", tone: "orange", name: "All Day Breakfast", items: [
+      I("Bacon & Egg", "Smoked bacon and eggs with toasted bread, tater tots and grilled tomato.", 450, ["pork"]),
+      I("American Breakfast", "Bacon, sausage, ham and egg with toasted bread.", 420, ["best", "pork"]),
+      I("Sausage and Egg", "Italian sausage and eggs with toasted bread, tater tots and grilled tomato.", 380, ["best", "pork"]),
+      I("Three Egg Omelet with Toast", "Three fresh eggs stuffed with ham, tomato, onion, bell pepper, mushroom and cheese. Served with toast.", 320, ["best", "pork"]),
+      I("Pancake with Bacon", "Three fluffy pancakes with bacon, maple syrup and butter.", 320, ["pork"]),
+      I("Fruit Platter", "A variety of seasonal local fruits.", 260),
+      I("Bread Basket", "Brown and white toast, pandesal and soft roll. Served with butter, cheese and jam.", 215)
+    ]},
+    { id: "rs-filipino", group: "roomservice", tone: "slate", name: "Filipino Breakfast", items: [
+      I("Beef Tapa", "Marinated beef with garlic fried rice, eggs, pickled papaya and grilled tomato.", 390, ["best"]),
+      I("Daing na Bangus", "Deep-fried milkfish with garlic fried rice, egg, pickled papaya and grilled tomato.", 390, ["best", "seafood"]),
+      I("Chicken Tocino", "Sweet marinated chicken breast fillet with garlic fried rice, egg, pickled papaya and grilled tomato.", 390, ["best"]),
+      I("Arroz Caldo (Chicken)", "Glutinous rice cooked in chicken broth, topped with boneless fried chicken, crispy garlic, green onion and boiled egg.", 350, ["best"]),
+      I("Pork Longganisa", "Spicy garlic Filipino sausage with garlic fried rice, eggs, pickled papaya and grilled tomato.", 350, ["best", "pork", "spicy"]),
+      I("Classic Champorado", "Chocolate-infused glutinous rice with condensed milk. Danggit (dried fish) on the side.", 280, ["best"])
+    ]},
+    { id: "rs-main", group: "roomservice", tone: "orange", name: "Main Course", items: [
+      I("Crispy Pata", "Deep-fried pork trotters topped with crispy garlic, chili and pickles. Served with spiced vinegar. Sharing for two.", 1500, ["best", "pork", "share"]),
+      I("Beef Bulalo", "Rich beef broth with tender beef shanks and vegetables. Served with steamed rice. Sharing for two.", 520, ["best", "share"]),
+      I("Salmon Sinigang", "Tamarind and miso-based soup with salmon fillet and vegetables. Served with steamed rice. Sharing for two.", 500, ["seafood", "share"]),
+      I("Beef Short Rib Kaldereta", "Slow-cooked beef short ribs with tomato, potato, carrot, bell pepper and cheese. Served with rice.", 490, ["best", "peanut", "spicy"]),
+      I("Sinigang Lechon Pork Belly", "Tamarind-based soup with lechon pork belly and vegetables. Served with steamed rice.", 490, ["best", "pork"]),
+      I("Beef Kare-Kare", "Slow-braised beef chunks in rich peanut sauce with fresh vegetables. Served with shrimp paste and rice.", 450, ["best", "peanut", "seafood"]),
+      I("Spicy Squid Adobo", "Baby squid in soy and vinegar with chili, garlic, onion, tomato and coriander. Served with steamed rice.", 450, ["seafood", "spicy"]),
+      I("Pork Sisig", "Marinated pork jowl and ears with chicken liver, mayo, onion and chili. Served on a hot plate.", 430, ["best", "pork", "spicy"]),
+      I("Pakbet with Bagnet", "Sautéed mixed vegetables in oyster sauce topped with crispy pork. Served with rice.", 400, ["best", "pork", "seafood"]),
+      I("Seafood Chopsuey", "Stir-fried mixed vegetables and seafood. Served with rice.", 390, ["seafood"]),
+      I("Chicken Adobo", "Chicken stewed in soy sauce and vinegar with garlic, bay leaf and peppercorn. Served with steamed rice.", 380)
+    ]},
+    { id: "rs-noodles", group: "roomservice", tone: "orange", name: "Noodles & Pasta", items: [
+      I("Seafood Marinara", "Shrimp, squid, clams and mussels in rich tomato sauce with basil, parmesan and garlic. Served with garlic bread.", 580, ["best", "seafood"]),
+      I("Pancit Palabok", "Rice noodles in shrimp-based sauce with minced pork, smoked fish, boiled egg, toasted garlic and green onion. Served with toasted bread.", 440),
+      I("Pancit Canton", "Stir-fried egg noodles with shrimp, squid, squid balls, cabbage, carrot, green beans and boiled egg. Served with toasted bread.", 400, ["best", "seafood", "pork"]),
+      I("Pancit Bihon Guisado", "Stir-fried rice noodles with chorizo, chicken, pork liver, cabbage, carrot and green beans. Served with toasted bread.", 380, ["pork"])
+    ]},
+    { id: "rs-sandwiches", group: "roomservice", tone: "slate", name: "Sandwiches", items: [
+      I("Cheese Burger", "Grilled beef patties with lettuce, tomato, onion, pickle, ketchup and mustard on a homemade bun. Served with truffle fries.", 450, ["best"]),
+      I("Buffalo Chicken Sandwich", "Crispy fried chicken fillet in buffalo sauce with lettuce, pickle and mayonnaise on a homemade bun. Served with truffle fries.", 410, ["best", "spicy"])
+    ]},
+    { id: "rs-sides", group: "roomservice", tone: "orange", name: "Sides", items: [
+      I("Mashed Potato", "Classic mashed potato.", 120)
+    ]},
+    { id: "rs-coffee-tea", group: "roomservice", tone: "slate", name: "Coffee & Tea", items: [
+      I("Freshly Brewed Coffee", "", 150),
+      I("Cappuccino (Hot)", "", 180),
+      I("Latte (Hot / Iced)", "", 180)
     ]}
   ]
+};
+
+/* ---- Room Service: Encima dishes that are ALSO on the room service menu (same price).
+   They keep one record and simply get the "roomservice" tag, so they show in both tabs.
+   Format: section id -> item names. To add/remove one later, tick/untick the
+   "Room Service" tag on the item in the staff desk. ---- */
+const RS_SHARED = {
+  especiales: ["Pan-Seared Salmon", "Grilled Porkchop"],
+  pasta: ["Shrimp Scampi", "Beef Lasagna", "Grilled Chicken Pesto", "Truffle Mushroom"],
+  pizza: ["Suprema", "Cheeseburger Pizza", "Texmex BBQ", "Pepperoni", "Hawaiian Bacon", "The White House", "Margherita"],
+  tacos: ["Club Sandwich", "Shrimp Quesadilla", "Beef Quesadilla", "Chicken Quesadilla", "Grilled Cheese Sandwich"],
+  "naked-burrito": ["Beef Naked Burrito", "Chicken Naked Burrito", "Shrimp Naked Burrito"],
+  sides: ["Truffle French Fries", "Mexican Fried Rice", "Flour Tortilla", "Buttered Corn and Carrots", "Garlic Fried Rice", "Plain Rice"],
+  dessert: ["Burnt Basque Cheesecake", "Strawberry Panna Cotta", "Pistachio Tres Leches Cake"],
+  coffee: ["Caramel Macchiato"],
+  tea: ["Earl Grey", "English Breakfast"],
+  refreshers: ["Mango Shake", "Watermelon Shake", "Encima Iced Tea"],
+  "wines-red": ["Suntana Cabernet Sauvignon"],
+  "wines-white": ["Casa Defrà Chardonnay"],
+  beer: ["Tanduay Ice Vodka Lemonade", "San Miguel Light", "San Miguel Pale Pilsen", "Smirnoff Mule"],
+  soda: ["Evian Still Water", "Ginger Ale", "Coke Regular", "Royal"]
+};
+MENU.sections.forEach((s) => (RS_SHARED[s.id] || []).forEach((name) => {
+  const it = s.items.find((x) => x.name === name);
+  if (it && !it.tags.includes("roomservice")) it.tags.push("roomservice");
+}));
+
+/* ---- Room Service tab layout: sections are merged by display name so the tab reads like the
+   room service menu. Anything not listed (e.g. a new section made in the desk) follows at the end. ---- */
+const RS_BLOCKS = {
+  map: { especiales: "Main Course", pasta: "Noodles & Pasta", tacos: "Sandwiches", coffee: "Coffee & Tea", tea: "Coffee & Tea",
+         refreshers: "Shakes & Iced Tea", "wines-red": "Wine", "wines-white": "Wine", beer: "Beers", soda: "Soda & Water" },
+  order: ["All Day Breakfast", "Filipino Breakfast", "Main Course", "Pizza", "Noodles & Pasta", "Sandwiches", "Naked Burrito",
+          "Sides", "Dessert", "Coffee & Tea", "Shakes & Iced Tea", "Wine", "Beers", "Soda & Water"],
+  compact: ["Coffee & Tea", "Shakes & Iced Tea", "Wine", "Beers", "Soda & Water"]   /* drinks: no photo tile */
 };
 
 const TAGS = {
@@ -211,12 +299,14 @@ const TAGS = {
   peanut:  { label: "Contains Peanuts", icon: "🥜" },
   share:   { label: "Good for Sharing", icon: "👥" },
   organic: { label: "Organic", icon: "🍃" },
-  vegan:   { label: "Vegan-Certified", icon: "🌱" }
+  vegan:   { label: "Vegan-Certified", icon: "🌱" },
+  roomservice: { label: "Room Service", icon: "🛎" }   /* brand-style label: never translated */
 };
 
 
 const SITE = {
   hours: "7:00 AM – 12:00 MN",
+  roomService: { hours: "6:00 AM – 11:45 PM", dial: "217 / 0" },
   phone: "+63 917 8860 380",
   email: "fnb_supervisor@citygardenhotelmakati.com",
   address: "23rd Floor (SP), City Garden Hotel Makati, Makati Ave. corner Durban St., Makati City 7870",

@@ -549,6 +549,7 @@
     const dis = ro ? "disabled" : "";
     const bestIds = Array.isArray(p.bestIds) ? p.bestIds : [];
     const storyPhotos = Array.isArray(p.storyPhotos) ? p.storyPhotos : [];
+    const rs = p.roomService || {};
     const f = (name, label, val, tag = "input") =>
       `<label>${label}${tag === "input" ? `<input name="${name}" value="${esc(val || "")}" ${dis}>` : `<textarea name="${name}" ${dis}>${esc(val || "")}</textarea>`}</label>`;
     $("#main").innerHTML = `<div class="pane narrow">
@@ -559,6 +560,9 @@
         <fieldset><legend>Contact</legend><div class="grid2">
           ${f("hours", "Hours", p.hours)}${f("phone", "Phone", p.phone)}${f("email", "Email", p.email)}${f("opentable", "OpenTable / Reserve link", p.opentable)}
         </div>${f("address", "Address", p.address, "textarea")}</fieldset>
+        <fieldset><legend>Room Service (shown at the top of the Room Service tab)</legend><div class="grid2">
+          ${f("rsHours", "Room service hours", rs.hours)}${f("rsDial", "Dial (e.g. 217 / 0)", rs.dial)}
+        </div></fieldset>
         <fieldset><legend>Social links</legend><div class="grid3">
           ${f("facebook", "Facebook", p.social && p.social.facebook)}${f("instagram", "Instagram", p.social && p.social.instagram)}${f("tiktok", "TikTok", p.social && p.social.tiktok)}
         </div></fieldset>
@@ -663,6 +667,7 @@
       ...prev,
       hours: v("hours"), phone: v("phone"), email: v("email"), address: v("address"), opentable: v("opentable"),
       social: { facebook: v("facebook"), instagram: v("instagram"), tiktok: v("tiktok") },
+      roomService: { hours: v("rsHours"), dial: v("rsDial") },
       heroKick: v("heroKick"), heroLead: v("heroLead"),
       storyTitle: v("storyTitle"), storyP1: v("storyP1"), storyP2: v("storyP2"), storyP3: v("storyP3"),
       storyPhotos, bestIds

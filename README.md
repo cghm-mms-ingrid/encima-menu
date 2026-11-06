@@ -43,6 +43,20 @@ values ('THEIR-EMAIL', 'approver', 'Executive chef');
 
 Then invite that email in Authentication → Users.
 
+## Room Service tab
+
+The **Room Service** tab sits next to Food / Drinks / Set Menu. Its label and the tag are always shown in English.
+
+- **Room-service-only dishes** live in Room Service sections (e.g. All Day Breakfast, Filipino Breakfast). In the desk, **Add section → Menu: Room Service**, then add items as usual. Add, edit, hide, sold out, delete all work the same as the rest of the menu.
+- **Dishes on both menus** are single records tagged **Room Service** (tick the tag on the item in the desk). They show in their normal tab and in the Room Service tab. Untick to remove them from the tab.
+- Inside the tab, sections are merged by name so it reads like the room service menu (layout list: `RS_BLOCKS` in `js/data.js`). A new section with a new name simply appears at the end; a section named like an existing one (e.g. "Dessert") joins it.
+- **Hours and dial number** shown at the top of the tab: desk **Pages → Room Service**.
+- **One-time load into Supabase:** run `supabase/room-service.sql` in the SQL editor (after `schema.sql` and `seed.sql`). It only adds rows, and is safe to run again. It is generated from `js/data.js` with `node tools/gen-roomservice-sql.js`.
+
+## Never translated
+
+Brand and contact details stay as written in every language: Encima Roofdeck Bar & Restaurant (logo, header, hero), City Garden Hotel Makati, OpenTable, the address, phone, email, opening hours, dish names, the "Room Service" tab and tag, and prices (₱, Glass / Bottle / Shot). Allergen and diet tags (Pork, Peanuts, Vegetarian...) are translated on purpose, for guest safety.
+
 ## Files to edit by hand (optional)
 
 - Hours/phone/story, **Best Sellers** (pick up to 4 dishes) and **Our Story photos** (3 uploads) after go-live: use the desk **Pages** tab, not the JS files.

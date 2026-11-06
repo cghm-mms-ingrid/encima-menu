@@ -63,14 +63,35 @@
   function buildBlocks() {
     const map = new Map();
     MENU.sections.forEach((s, si) => {
+      if (s.group === "roomservice") return;            /* Room Service tab is built separately below */
       const id = blockId(s);
       if (!map.has(id)) map.set(id, { id, group: s.group, tone: s.tone, secs: [], note: s.note });
       map.get(id).secs.push({ s, si });
     });
-    return [...map.values()].map((b) => ({ ...b, name: blockNameOf(b.id, b.secs.map((x) => x.s)) }));
+    return [...map.values()].map((b) => ({ ...b, name: blockNameOf(b.id, b.secs.map((x) => x.s)) })).concat(buildRsBlocks());
+  }
+
+  /* Room Service tab: its own sections PLUS any Encima item tagged "roomservice", merged by display name
+     (see RS_BLOCKS in data.js) so the tab reads like the room service menu. Items keep their real
+     section/item index, so photos, the modal and the staff desk all behave as normal. */
+  function buildRsBlocks() {
+    const map = new Map();
+    MENU.sections.forEach((s, si) => {
+      if (s.setmenu) return;
+      const own = s.group === "roomservice";
+      if (!own && !s.items.some((it) => it.tags && it.tags.includes("roomservice"))) return;
+      const name = own ? s.name : (RS_BLOCKS.map[s.id] || s.name);
+      if (!map.has(name)) map.set(name, { id: "rs-" + name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""), group: "roomservice", secs: [], note: s.note, rs: true, name });
+      const b = map.get(name);
+      if (!b.note && s.note) b.note = s.note;
+      b.secs.push({ s, si, rsOnly: !own });
+    });
+    const rank = (n) => { const i = RS_BLOCKS.order.indexOf(n); return i < 0 ? 1000 : i; };
+    return [...map.values()].map((b, i) => ({ b, i })).sort((x, y) => rank(x.b.name) - rank(y.b.name) || x.i - y.i)
+      .map(({ b }, i) => ({ ...b, tone: i % 2 ? "slate" : "orange" }));
   }
   const BLOCKS_LIST = buildBlocks();
-  const blockName = (b) => (b.secs.length === 1 && SECTION_NAMES[state.lang] && SECTION_NAMES[state.lang][b.secs[0].s.id]) || b.name;
+  const blockName = (b) => b.rs ? b.name : (b.secs.length === 1 && SECTION_NAMES[state.lang] && SECTION_NAMES[state.lang][b.secs[0].s.id]) || b.name;
 
   function detectLang() {
     const saved = store.get("encima-lang");
@@ -82,7 +103,9 @@
     if (n.startsWith("ja")) return "ja";
     return "en";
   }
-
+  /* Brand names that must never be translated: Encima (Roofdeck Bar & Restaurant), City Garden Hotel (Makati), OpenTable. */
+  const BRAND = /Encima(?:\s+Roofdeck)?(?:\s+Bar)?(?:\s+(?:and|&amp;)\s+Restaurant)?|City\s+Garden\s+Hotel(?:\s+Makati)?|OpenTable/gi;
+  const brandHTML = (s) => esc(s).replace(BRAND, (m) => `<span class="notranslate" translate="no">${m}</span>`);
   const keep = (s) => `<span class="notranslate" translate="no">${esc(s)}</span>`;
 
   function priceHTML(p) {
@@ -95,6 +118,7 @@
     if (p.bottle   != null) parts.push(`${keep("Bottle")} ${peso(p.bottle)}${p.bottleNote ? ` (${esc(p.bottleNote)})` : ""}`);
     return `<span class="price">${parts.map((x) => `<small>${x}</small>`).join("")}</span>`;
   }
+  const tagName = (id) => id === "roomservice" ? keep(tagLabel(id)) : esc(tagLabel(id));   /* "Room Service" stays English */
   const tagIcons = (tags) => tags.map((id) => `<span class="tag" title="${esc(tagLabel(id))}" aria-label="${esc(tagLabel(id))}">${TAGS[id].icon}</span>`).join("");
 
  /* ---------- filtering: an item must have AT LEAST ONE ticked tag ---------- */
@@ -145,9 +169,7 @@ function sorted(entries) {
   /* ---------- static chrome ---------- */
   function renderChrome() {
     document.documentElement.lang = "en";
-
-    // Translate every labelled piece of static text, then let the staff desk override the editable copy.
-    document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = t(el.dataset.i18n)));
+    document.querySelectorAll("[data-i18n]").forEach((el) => (el.innerHTML = brandHTML(t(el.dataset.i18n))));
     $("#q").placeholder = t("search");
     $("#searchToggle").setAttribute("aria-label", t("searchBtn"));
     $("#optionsBtn").setAttribute("aria-label", t("optTitle"));
@@ -157,14 +179,18 @@ function sorted(entries) {
       const el = $(selector);
       if (el && value) el.textContent = value;
     };
+    const setCopy = (selector, value) => {            /* editable copy: brand names stay untranslated */
+      const el = $(selector);
+      if (el && value) el.innerHTML = brandHTML(value);
+    };
 
     // Text edited in the staff desk (Pages tab)
-    setText("#heroKick", SITE.heroKick);
-    setText("#heroLead", SITE.heroLead);
-    setText("#storyTitle", SITE.storyTitle);
-    setText("#storyP1", SITE.storyP1);
-    setText("#storyP2", SITE.storyP2);
-    setText("#storyP3", SITE.storyP3);
+    setCopy("#heroKick", SITE.heroKick);
+    setCopy("#heroLead", SITE.heroLead);
+    setCopy("#storyTitle", SITE.storyTitle);
+    setCopy("#storyP1", SITE.storyP1);
+    setCopy("#storyP2", SITE.storyP2);
+    setCopy("#storyP3", SITE.storyP3);
 
     // Opening hours appear in both the hero and footer.
     setText("#hours", SITE.hours);
@@ -259,12 +285,12 @@ function sorted(entries) {
   /* ---------- toolbar ---------- */
   function renderToolbar() {
     $("#groups").innerHTML = MENU.groups.map((g) =>
-      `<button role="tab" data-g="${g.id}" aria-selected="${!state.q && g.id === state.group}">${esc(t(g.id))}</button>`).join("");
+      `<button role="tab" data-g="${g.id}" aria-selected="${!state.q && g.id === state.group}">${g.id === "roomservice" ? keep(t(g.id)) : esc(t(g.id))}</button>`).join("");
 
     /* section dropdown: grouped by Food / Drinks / Set Menu */
     const sel = $("#sectionSel");
     sel.innerHTML = `<option value="all">${esc(t("allSections"))}</option>` + MENU.groups.map((g) =>
-      `<optgroup label="${esc(t(g.id))}">${BLOCKS_LIST.filter((b) => b.group === g.id).map((b) =>
+      `<optgroup label="${esc(t(g.id))}" ${g.id === "roomservice" ? 'translate="no"' : ""}>${BLOCKS_LIST.filter((b) => b.group === g.id).map((b) =>
         `<option value="${b.id}" ${b.id === state.block ? "selected" : ""}>${esc(blockName(b))}</option>`).join("")}</optgroup>`).join("");
     sel.value = state.block;
 
@@ -275,12 +301,13 @@ function sorted(entries) {
     const present = new Set();
     BLOCKS_LIST.filter(inScope).forEach((b) => b.secs.forEach(({ s }) => s.items.forEach((i) => visible(i) && i.tags.forEach((x) => present.add(x)))));
     state.tags.forEach((x) => present.add(x));
-    const order = ["best", "veg", "spicy", "seafood", "pork", "peanut", "share", "organic", "vegan"].filter((x) => present.has(x));
+    const inRs = state.group === "roomservice" && !state.q;      /* every item there is Room Service: no need to filter by it */
+    const order = ["best", "veg", "spicy", "seafood", "pork", "peanut", "share", "organic", "vegan", "roomservice"].filter((x) => present.has(x) && !(inRs && x === "roomservice"));
     $("#filterList").innerHTML = order.map((id) =>
-      `<label class="fopt"><input type="checkbox" data-tag="${id}" ${state.tags.has(id) ? "checked" : ""}><span>${TAGS[id].icon} ${esc(tagLabel(id))}</span></label>`).join("");
+      `<label class="fopt"><input type="checkbox" data-tag="${id}" ${state.tags.has(id) ? "checked" : ""}><span>${TAGS[id].icon} ${tagName(id)}</span></label>`).join("");
     $("#filterBtn").textContent = state.tags.size ? `${t("filtersN")} · ${state.tags.size}` : t("all");
     $("#active").innerHTML = state.tags.size ? `<span class="muted">${esc(t("activeFilters"))}:</span> ` +
-      [...state.tags].map((id) => `<button class="chip on" data-rm="${id}">${TAGS[id].icon} ${esc(tagLabel(id))} ×</button>`).join("") : "";
+      [...state.tags].map((id) => `<button class="chip on" data-rm="${id}">${TAGS[id].icon} ${tagName(id)} ×</button>`).join("") : "";
     const setOnly = !state.q && (state.group === "setmenu" || state.block === "perfect-night");
     $(".tools").style.display = setOnly ? "none" : "";
     $("#active").style.display = setOnly ? "none" : "";
@@ -302,6 +329,18 @@ function sorted(entries) {
       ${desc ? `<p class="desc">${esc(desc)}</p>` : ""}
       <div class="tags">${tagIcons(it.tags)}${sold ? `<span class="badge sold">${esc(t("soldOut"))}</span>` : ""}</div></div></button>`;
   }
+  /* drinks (and room service drinks) without a photo use the slim card */
+  const compactFor = (si, it) => {
+    if (it.photos && it.photos.length) return false;
+    const s = MENU.sections[si];
+    return s.group === "drinks" || (s.group === "roomservice" && RS_BLOCKS.compact.includes(s.name));
+  };
+  const rsInfoHTML = () => {
+    if (state.q || state.group !== "roomservice") return "";
+    const rs = SITE.roomService || {};
+    return `<div class="rsinfo"><p>${keep("Room Service")} · ${esc(t("rsAvail"))} <b>${keep(rs.hours || "6:00 AM – 11:45 PM")}</b></p>
+      <p>${esc(t("rsDial"))} <b>${keep(rs.dial || "217 / 0")}</b> ${esc(t("rsOrders"))}</p></div>`;
+  };
   function setMenuHTML(s) {
     const it = s.items[0];
     return `<section class="section dark" id="sec-${s.id}"><div class="setmenu">
@@ -312,10 +351,14 @@ function sorted(entries) {
 function renderFlat() {
   const entries = [];
   let seq = 0;
+  const seen = new Set();                                  // a dish on both menus is listed once
   BLOCKS_LIST.filter(inScope).forEach((b) => {
-    b.secs.forEach(({ s, si }) => {
+    b.secs.forEach(({ s, si, rsOnly }) => {
       if (s.setmenu) return;
       s.items.forEach((it, ii) => {
+        if (rsOnly && !it.tags.includes("roomservice")) return;
+        if (seen.has(it)) return;
+        seen.add(it);
         seq++;
         if (matches(it)) entries.push([it, seq, si, ii]);   // seq = global menu order
       });
@@ -325,9 +368,9 @@ function renderFlat() {
   const list = sorted(entries);
   const back = state.block !== "all" && !state.q ? `<button class="link back" data-back>${esc(t("backFull"))}</button>` : "";
 
-  $("#menuList").innerHTML = back + (list.length
+  $("#menuList").innerHTML = back + rsInfoHTML() + (list.length
     ? `<section class="section"><div class="grid">${list.map(([it, , si, ii]) => {
-        const compact = MENU.sections[si].group === "drinks" && !(it.photos && it.photos.length);
+        const compact = compactFor(si, it);
         return cardHTML(it, si, ii, compact);
       }).join("")}</div></section>`
     : `<p class="empty">${esc(t("noResults"))}</p>`);
@@ -340,6 +383,31 @@ function renderFlat() {
       if (b.secs[0].s.setmenu) {
         if (state.q || state.tags.size) return;
         html += setMenuHTML(b.secs[0].s); count++; return;
+      }
+      if (b.rs) {                                           // Room Service block: one merged list, price high to low by default
+        let seq = 0;
+        const entries = [];
+        b.secs.forEach(({ s, si, rsOnly }) => s.items.forEach((it, ii) => {
+          if (rsOnly && !it.tags.includes("roomservice")) return;
+          seq++;
+          if (matches(it)) entries.push([it, seq, si, ii]);
+        }));
+        if (!entries.length) return;
+        const list = state.sort === "menu"
+          ? entries.slice().sort((a, c) => {
+              const pa = sortPrice(a[0].price), pc = sortPrice(c[0].price);
+              if (pa == null && pc == null) return a[1] - c[1];
+              if (pa == null) return 1;
+              if (pc == null) return -1;
+              return (pc - pa) || a[1] - c[1];
+            })
+          : sorted(entries);
+        count++;
+        html += `<section class="section" id="sec-${b.id}">
+          <div class="banner ${b.tone === "orange" ? "orange" : ""}"><div class="wrap-b"><h2>${esc(blockName(b))}</h2>
+          <small>${b.note ? esc(b.note) + " · " : ""}${list.length} ${esc(t("items"))}</small></div></div>
+          <div class="grid">${list.map(([it, , si, ii]) => cardHTML(it, si, ii, compactFor(si, it))).join("")}</div></section>`;
+        return;
       }
       const parts = b.secs.map(({ s, si }) => ({ s, si, items: sorted(s.items.map((it, ii) => [it, ii]).filter(([it]) => matches(it))) })).filter((p) => p.items.length);
       if (!parts.length) return;
@@ -355,7 +423,7 @@ function renderFlat() {
         }).join("")}</section>`;
     });
     const back = state.block !== "all" && !state.q ? `<button class="link back" data-back>${esc(t("backFull"))}</button>` : "";
-    $("#menuList").innerHTML = back + (count ? html : `<p class="empty">${esc(t("noResults"))}</p>`);
+    $("#menuList").innerHTML = back + rsInfoHTML() + (count ? html : `<p class="empty">${esc(t("noResults"))}</p>`);
   }
   function render() { renderChrome(); renderToolbar(); renderMenu(); }
   const refresh = () => { renderToolbar(); renderMenu(); };
@@ -405,7 +473,7 @@ function renderFlat() {
       `<div class="slide ph"><div><img src="images/logo.webp" alt=""><div>${esc(t("photo"))}</div></div></div>`).join("")}</div>
       ${photos.length > 1 ? `<button class="car-btn prev" aria-label="Previous">‹</button><button class="car-btn next" aria-label="Next">›</button><div class="dots">${photos.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("")}</div>` : ""}`;
     $("#mBody").innerHTML = `<h3 id="mTitle" class="notranslate" translate="no">${esc(it.name)}</h3>${priceHTML(it.price)}${desc ? `<p>${esc(desc)}</p>` : ""}
-      ${it.tags.length ? `<div class="legend">${it.tags.map((id) => `<span class="badge">${TAGS[id].icon} ${esc(tagLabel(id))}</span>`).join("")}</div>` : ""}
+      ${it.tags.length ? `<div class="legend">${it.tags.map((id) => `<span class="badge">${TAGS[id].icon} ${tagName(id)}</span>`).join("")}</div>` : ""}
       ${it.pairing ? `<p class="pair"><b>${esc(t("pairing"))}:</b> ${esc(it.pairing)}</p>` : ""}`;
     cur = 0;
     const m = $("#modal"); lastFocus = document.activeElement; m.hidden = false; document.body.style.overflow = "hidden"; $("#mClose").focus();

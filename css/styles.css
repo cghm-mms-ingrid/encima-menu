@@ -287,3 +287,9 @@ select{font:inherit;font-size:.85rem;padding:8px 10px;border:1px solid var(--lin
   .groups button{font-size:.75rem;padding:8px 8px}
 }
 @media(prefers-reduced-motion:reduce){.tools{transition:none!important}}
+
+/* Room Service tab: hours + dial line above the menu */
+.rsinfo{margin:14px 0 0;padding:12px 18px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:10px;color:var(--slate);font-size:.92rem;line-height:1.5}
+.rsinfo p{margin:0}
+.rsinfo b{font-weight:700}
+@media (max-width:480px){ .groups button{padding:8px 5px;font-size:.7rem} }

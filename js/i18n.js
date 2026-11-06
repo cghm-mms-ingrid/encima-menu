@@ -12,7 +12,7 @@ const LANGS = [
 ];
 
 const UI = {
-  en: { food: "Food", drinks: "Drinks", setmenu: "Set Menu", search: "Search the menu…", all: "All", filters: "Filters", clear: "Clear",
+  en: { food: "Food", drinks: "Drinks", setmenu: "Set Menu", roomservice: "Room Service", search: "Search the menu…", all: "All", filters: "Filters", clear: "Clear",
         reserve: "Reserve on OpenTable", hours: "Open daily", vat: "All prices inclusive of VAT. No service charge.",
         noResults: "Nothing matches your search or filters.", soldOut: "Sold out", tbd: "Price on request", glass: "Glass", bottle: "Bottle", shot: "Shot", glass200: "200 ml",
         pairing: "Pairs with", photo: "Photo coming soon", close: "Close", tagline: "Bar & Restaurant", menu: "Menu", visit: "Visit us", items: "items",
@@ -73,6 +73,7 @@ Object.assign(UI.en, {
   menuKick: "The menu", menuTitle: "Eat, drink, enjoy",
   sectionLbl: "Section", sortLbl: "Sort by", allSections: "All sections", sortMenu: "Menu order", sortDesc: "Price: high to low", sortAsc: "Price: low to high",
   optTitle: "Sort & filter", searchBtn: "Search the menu", showResults: "Show results",
+  rsAvail: "Available daily", rsDial: "Dial", rsOrders: "for orders",
   done: "Done", backFull: "← Back to full menu", activeFilters: "Showing only", selected: "selected", filtersN: "Filters"
 });
 const _x = (code, o) => Object.assign(UI[code], o);
@@ -81,3 +82,10 @@ _x("zh-Hans", { optTitle: "排序与筛选", searchBtn: "搜索菜单", showResu
 _x("zh-Hant", { optTitle: "排序與篩選", searchBtn: "搜尋菜單", showResults: "查看結果", navBest: "人氣之選", navStory: "我們的故事", navContact: "聯絡我們", reserveShort: "訂位", viewFull: "查看完整菜單", sectionLbl: "分類", sortLbl: "排序", allSections: "全部分類", sortMenu: "菜單順序", sortDesc: "價格：由高至低", sortAsc: "價格：由低至高", done: "完成", backFull: "← 返回完整菜單", activeFilters: "僅顯示", fact2t: "每日營業", bestTitle: "人氣之選", menuTitle: "盡享美食美酒" });
 _x("ko", { optTitle: "정렬 및 필터", searchBtn: "메뉴 검색", showResults: "결과 보기", navBest: "베스트셀러", navStory: "스토리", navContact: "문의", reserveShort: "예약", viewFull: "전체 메뉴 보기", sectionLbl: "섹션", sortLbl: "정렬", allSections: "전체 섹션", sortMenu: "메뉴 순서", sortDesc: "가격 높은 순", sortAsc: "가격 낮은 순", done: "완료", backFull: "← 전체 메뉴로", activeFilters: "표시 중", fact2t: "매일 영업", bestTitle: "베스트셀러", menuTitle: "먹고 마시고 즐기세요" });
 _x("ja", { optTitle: "並び替えとフィルター", searchBtn: "メニューを検索", showResults: "結果を見る", navBest: "人気メニュー", navStory: "私たちについて", navContact: "お問い合わせ", reserveShort: "予約", viewFull: "全メニューを見る", sectionLbl: "カテゴリ", sortLbl: "並び替え", allSections: "すべてのカテゴリ", sortMenu: "メニュー順", sortDesc: "価格の高い順", sortAsc: "価格の安い順", done: "完了", backFull: "← 全メニューに戻る", activeFilters: "表示中", fact2t: "毎日営業", bestTitle: "人気メニュー", menuTitle: "食べて、飲んで、楽しむ" });
+
+/* Room Service info line (needs native-speaker review like the rest). The words "Room Service" itself stay English. */
+_x("fil", { rsAvail: "Bukas araw-araw", rsDial: "I-dial ang", rsOrders: "para mag-order" });
+_x("zh-Hans", { rsAvail: "每日供应", rsDial: "拨打", rsOrders: "点餐" });
+_x("zh-Hant", { rsAvail: "每日供應", rsDial: "撥打", rsOrders: "點餐" });
+_x("ko", { rsAvail: "매일 이용 가능", rsDial: "주문 시 다이얼", rsOrders: "" });
+_x("ja", { rsAvail: "毎日ご利用可能", rsDial: "ダイヤル", rsOrders: "でご注文" });
